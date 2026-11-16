@@ -1,4 +1,3 @@
-
 export interface Job {
   id: string;
   title: string;
@@ -10,4 +9,9 @@ export interface Job {
   postedAt: string;
   category: string;
   tags: string[];
+
+  description: string;
+  responsibilities: string[];
+  requirements: string[];
+  benefits: string[];
 }
