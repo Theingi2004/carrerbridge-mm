@@ -128,3 +128,17 @@
     @apply font-sans;
   }
 }
+@utility container-default {
+  width: 100%;
+  max-width: 60rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+
+  @media (min-width: 640px) {
+    padding-inline: 2rem;
+  }
+
+  @media (min-width: 1024px) {
+    padding-inline: 2.5rem;
+  }
+}
