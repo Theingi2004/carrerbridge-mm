@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-
+import { isDemoMode } from "@/lib/demo-mode";
+import {
+  DEMO_CREDENTIALS,
+  RECRUITER_CREDENTIALS,
+} from "../data/demo-user";
 import { createClient } from "@/lib/supabase/client";
 import {
   loginSchema,
@@ -26,10 +30,45 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
+
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     setErrorMessage("");
 
+    // DEMO LOGIN
+    if (isDemoMode) {
+      const isJobSeeker =
+        values.email === DEMO_CREDENTIALS.email &&
+        values.password === DEMO_CREDENTIALS.password;
+
+      const isRecruiter =
+        values.email === RECRUITER_CREDENTIALS.email &&
+        values.password === RECRUITER_CREDENTIALS.password;
+
+      if (!isJobSeeker && !isRecruiter) {
+        setErrorMessage("Invalid demo email or password.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Create a temporary demo session
+      document.cookie =
+        "careerbridge_demo_session=true; path=/; SameSite=Lax";
+
+      // Save the logged-in user's role
+      const role = isRecruiter ? "recruiter" : "job_seeker";
+
+      document.cookie =
+        `careerbridge_demo_role=${role}; path=/; SameSite=Lax`;
+
+      setIsLoading(false);
+
+      router.replace("/dashboard");
+      router.refresh();
+      return;
+    }
+
+    // REAL SUPABASE LOGIN
     const supabase = createClient();
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -47,6 +86,7 @@ export default function LoginForm() {
     router.push("/dashboard");
     router.refresh();
   };
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

@@ -68,7 +68,7 @@ export default function JobCard({ job }: JobCardProps) {
         </div>
 
         <Link
-          href={`/jobs/${job.id}`}
+          href={`/job/${job.id}`}
           aria-label={`View ${job.title} at ${job.company}`}
           className="flex size-10 items-center justify-center rounded-full border border-border text-brand-primary transition-all duration-200 hover:bg-brand-primary hover:text-white active:scale-95"
         >

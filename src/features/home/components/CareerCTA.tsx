@@ -45,7 +45,7 @@ export default function CareerCTA() {
               </Link>
 
               <Link
-                href="/jobs"
+                href="/job"
                 className="
                   inline-flex items-center justify-center
                   rounded-lg border border-white/30 px-7 py-3.5

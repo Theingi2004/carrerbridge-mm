@@ -1,5 +1,6 @@
 export interface Job {
   id: string;
+  recruiterId: string; // Add this property
   title: string;
   company: string;
   location: string;

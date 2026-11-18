@@ -27,7 +27,7 @@ export default function FeaturedJobs() {
           </div>
 
           <Link
-            href="/jobs"
+            href="/job"
             className="inline-flex items-center gap-2 text-sm font-semibold text-brand-primary transition-all duration-200 hover:gap-3"
           >
             View All Jobs

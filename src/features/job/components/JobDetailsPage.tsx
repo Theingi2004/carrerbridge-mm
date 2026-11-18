@@ -30,7 +30,7 @@ export default function JobDetailsPage({
     <main className="min-h-screen bg-brand-background py-10 sm:py-14">
       <div className="container-default">
         <Link
-          href="/jobs"
+          href="/job"
           className="inline-flex items-center gap-2 text-sm font-semibold text-brand-primary transition-colors hover:text-brand-secondary"
         >
           <ArrowLeft size={18} />
@@ -120,13 +120,12 @@ export default function JobDetailsPage({
               The job application feature will be available in a later milestone.
             </p>
 
-            <button
-              type="button"
-              disabled
-              className="mt-5 w-full cursor-not-allowed rounded-lg bg-brand-primary/50 px-5 py-3 text-sm font-semibold text-white"
+            <Link
+              href={`/job/${job.id}/apply`}
+              className="mt-5 block w-full rounded-lg bg-brand-primary px-5 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-brand-primary/90 hover:shadow-md active:scale-95"
             >
-              Apply Now (Coming Soon)
-            </button>
+              Apply Now
+            </Link>
 
             <p className="mt-3 text-center text-xs text-muted-foreground">
               Job ID: {job.id}

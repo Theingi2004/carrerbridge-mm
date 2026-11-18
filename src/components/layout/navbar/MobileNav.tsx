@@ -24,8 +24,8 @@ export default function MobileNav({
           const isActive =
             link.href === "/"
               ? pathname === "/"
-              : link.href === "/jobs"
-                ? pathname.startsWith("/jobs")
+              : link.href === "/job"
+                ? pathname.startsWith("/job")
                 : false;
 
           return (

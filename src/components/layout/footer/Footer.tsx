@@ -9,7 +9,7 @@ import {
 
 const footerLinks = {
   platform: [
-    { label: "Find Jobs", href: "/jobs" },
+    { label: "Find Jobs", href: "/job" },
     { label: "Career Resources", href: "/#career-resources" },
     { label: "About Us", href: "/#about" },
   ],
@@ -44,7 +44,7 @@ export default function Footer() {
             </Link>
 
             <p className="mt-5 max-w-sm text-sm leading-7 text-white/60">
-              Connecting Myanmar's young talent with
+              Connecting Myanmar&apos;s young talent with
               meaningful IT career opportunities.
               Build your skills, discover opportunities,
               and grow your future.

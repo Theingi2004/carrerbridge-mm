@@ -34,7 +34,7 @@ export default function HeroSection() {
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-brand-text sm:text-5xl lg:text-6xl">
             Find Your Future in
             <span className="text-brand-primary">
-              {" "}Myanmar's IT Industry
+              {" "}Myanmar&apos;s IT Industry
             </span>
           </h1>
 
@@ -47,7 +47,7 @@ export default function HeroSection() {
 
           {/* Search Form */}
           <form
-            action="/jobs"
+            action="/job"
             method="GET"
             className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 rounded-2xl border border-border bg-white p-3 shadow-lg sm:flex-row"
           >
@@ -84,7 +84,7 @@ export default function HeroSection() {
             {popularCategories.map((category) => (
               <Link
                 key={category}
-                href={`/jobs?category=${encodeURIComponent(category)}`}
+                href={`/job?category=${encodeURIComponent(category)}`}
                 className="rounded-full border border-border bg-white px-4 py-2 text-xs font-medium text-brand-text transition-all duration-200 hover:border-brand-primary hover:text-brand-primary active:scale-95"
               >
                 {category}

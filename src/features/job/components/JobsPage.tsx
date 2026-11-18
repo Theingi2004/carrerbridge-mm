@@ -1,9 +1,10 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
-
+import { getCreatedJobs } from "../services/job.service";
+import type { Job } from "../types/job.types";
 import { jobs } from "../data/jobs";
 import JobCard from "@/features/home/components/JobCard";
 
@@ -11,9 +12,15 @@ export default function JobsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [employmentType, setEmploymentType] = useState("all");
+  const [createdJobs, setCreatedJobs] = useState<Job[]>([]);
 
+  useEffect(() => {
+    setCreatedJobs(getCreatedJobs());
+  }, []);
+
+  const allJobs = [...createdJobs, ...jobs];
   const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
+    return allJobs.filter((job) => {
       const searchText = search.toLowerCase().trim();
 
       const matchesSearch =
@@ -24,8 +31,20 @@ export default function JobsPage() {
           tag.toLowerCase().includes(searchText)
         );
 
+      const categoryMap: Record<string, string[]> = {
+        frontend: ["frontend development", "frontend"],
+        backend: ["backend development", "backend"],
+        "ui-ux": ["ui/ux design"],
+        mobile: ["mobile development"],
+        data: ["data analysis", "data & analytics"],
+        devops: ["devops", "devops & cloud"],
+      };
+
       const matchesCategory =
-        category === "all" || job.category === category;
+        category === "all" ||
+        (categoryMap[category] ?? []).includes(
+          job.category.toLowerCase()
+        );
 
       const matchesEmployment =
         employmentType === "all" ||
@@ -37,7 +56,7 @@ export default function JobsPage() {
         matchesEmployment
       );
     });
-  }, [search, category, employmentType]);
+  }, [search, category, employmentType, createdJobs]);
 
   const clearFilters = () => {
     setSearch("");

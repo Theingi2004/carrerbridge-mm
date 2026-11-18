@@ -15,7 +15,7 @@ export default function CategoryCard({
 
   return (
     <Link
-      href={`/jobs?category=${category.slug}`}
+      href={`/job?category=${category.slug}`}
       className="
         group flex h-full flex-col
         rounded-2xl border border-border bg-white p-6

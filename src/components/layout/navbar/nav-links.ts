@@ -11,7 +11,7 @@ export const navLinks: NavLink[] = [
   },
   {
     label: "Find Jobs",
-    href: "/jobs",
+    href: "/job",
   },
   {
     label: "Career Resources",

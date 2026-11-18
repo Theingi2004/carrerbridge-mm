@@ -20,8 +20,8 @@ export default function DesktopNav({
         const isActive =
           link.href === "/"
             ? pathname === "/"
-            : link.href === "/jobs"
-              ? pathname.startsWith("/jobs")
+            : link.href === "/job"
+              ? pathname.startsWith("/job")
               : false;
 
         return (
