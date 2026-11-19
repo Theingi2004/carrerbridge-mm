@@ -50,12 +50,12 @@
   /* CareerBridge Brand Colors */
   --color-brand-primary: #1d4639;
   --color-brand-secondary: #c49a45;
-  --color-brand-background: #f8faf8;
+  --color-brand-background: #f3f5f4;
   --color-brand-text: #17231f;
 }
 
 :root {
-  --background: #f8faf8;
+  --background: #f3f5f4;
   --foreground: #17231f;
 
   --card: #ffffff;

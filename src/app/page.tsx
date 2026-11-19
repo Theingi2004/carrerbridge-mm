@@ -8,14 +8,14 @@ import JobCategories from "@/features/home/components/JobCategories";
 
 export default function Home() {
   return (
-    <main>
+    <>
       <HeroSection />
       <FeaturedJobs />
       <JobCategories />
       <HowItWorks />
-      <CareerCTA />
-      <CareerResources />
       <AboutSection />
-    </main>
+      <CareerResources />
+      <CareerCTA />
+    </>
   );
 }
