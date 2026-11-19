@@ -22,6 +22,9 @@ export default function LogoutButton() {
       document.cookie =
         "careerbridge_demo_session=; path=/; max-age=0; SameSite=Lax";
 
+      document.cookie =
+        "careerbridge_demo_role=; path=/; max-age=0; SameSite=Lax";
+
       setIsLoading(false);
       router.replace("/login");
       router.refresh();

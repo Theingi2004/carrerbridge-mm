@@ -1,11 +1,24 @@
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import {
+  UserRound,
+  Mail,
+  Phone,
+  MapPin,
+  BriefcaseBusiness,
+  FileText,
+  Code2,
+  Save,
+} from "lucide-react";
+
+import { updateProfile } from "../services/profile.service";
+
 import type {
   Profile,
-  ProfileFormValues,
+  UpdateProfileInput,
 } from "../types/profile.types";
 
 interface ProfileFormProps {
@@ -19,365 +32,271 @@ export default function ProfileForm({
 }: ProfileFormProps) {
   const router = useRouter();
 
-  const [form, setForm] = useState<ProfileFormValues>({
+  const [formData, setFormData] = useState<UpdateProfileInput>({
     full_name: profile.full_name,
-    phone: profile.phone ?? "",
-    headline: profile.headline ?? "",
-    location: profile.location ?? "",
-    skills: profile.skills ?? [],
+    phone: profile.phone,
+    location: profile.location,
+    headline: profile.headline,
+    bio: profile.bio,
+    skills: profile.skills,
+    avatar_url: profile.avatar_url,
   });
 
-  const [skillInput, setSkillInput] = useState("");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState(profile.avatar_url ?? "");
-  const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const supabase = createClient();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = event.target;
-
-    setForm((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const addSkill = () => {
-    const skill = skillInput.trim();
-
-    if (!skill) return;
-
-    if (
-      form.skills.some(
-        (item) => item.toLowerCase() === skill.toLowerCase()
-      )
-    ) {
-      setSkillInput("");
-      return;
-    }
-
-    setForm((previous) => ({
-      ...previous,
-      skills: [...previous.skills, skill],
-    }));
-
-    setSkillInput("");
-  };
-
-  const removeSkill = (skillToRemove: string) => {
-    setForm((previous) => ({
-      ...previous,
-      skills: previous.skills.filter(
-        (skill) => skill !== skillToRemove
-      ),
-    }));
-  };
-
-  const handleAvatarChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+  const handleSkillsChange = (
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+    const skills = e.target.value
+      .split(",")
+      .map((skill) => skill.trim())
+      .filter(Boolean);
 
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setErrorMessage("Please select an image file.");
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      setErrorMessage("Image must be smaller than 2 MB.");
-      return;
-    }
-
-    setAvatarFile(file);
-    setPreview(URL.createObjectURL(file));
-    setErrorMessage("");
+    setFormData({
+      ...formData,
+      skills,
+    });
   };
 
   const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>
+    e: React.FormEvent<HTMLFormElement>
   ) => {
-    event.preventDefault();
+    e.preventDefault();
 
-    setIsSaving(true);
-    setMessage("");
-    setErrorMessage("");
+    setError("");
+    setSuccess("");
+
+    if (!formData.full_name.trim()) {
+      setError("Full name is required.");
+      return;
+    }
 
     try {
-      let avatarUrl = profile.avatar_url;
+      setSaving(true);
 
-      // Step 1: Upload the selected image.
-      if (avatarFile) {
-        const fileExtension =
-          avatarFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      await updateProfile({
+        ...formData,
+        full_name: formData.full_name.trim(),
+        phone: formData.phone.trim(),
+        location: formData.location.trim(),
+        headline: formData.headline.trim(),
+        bio: formData.bio.trim(),
+      });
 
-        const filePath =
-          `${userId}/${crypto.randomUUID()}.${fileExtension}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, avatarFile, {
-            upsert: false,
-            contentType: avatarFile.type,
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage
-          .from("avatars")
-          .getPublicUrl(filePath);
-
-        avatarUrl = data.publicUrl;
-      }
-
-      // Step 2: Update the profile in the database.
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          full_name: form.full_name.trim(),
-          phone: form.phone.trim() || null,
-          headline: form.headline.trim() || null,
-          location: form.location.trim() || null,
-          skills: form.skills,
-          avatar_url: avatarUrl,
-        })
-        .eq("id", userId);
-
-      if (updateError) throw updateError;
-
-      setMessage("Profile updated successfully!");
-      setAvatarFile(null);
+      setSuccess("Profile updated successfully.");
       router.refresh();
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to update profile."
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to update profile."
       );
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
+  const inputClass =
+    "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-brand-text outline-none transition placeholder:text-muted-foreground/70 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10";
+
+  const labelClass =
+    "mb-2 block text-sm font-semibold text-brand-text";
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Profile Picture */}
-      <section className="rounded-2xl border border-border bg-white p-6">
-        <h2 className="text-lg font-bold text-brand-text">
-          Profile Picture
-        </h2>
-
-        <div className="mt-5 flex flex-wrap items-center gap-5">
-          {preview ? (
-            <img
-              src={preview}
-              alt="Profile preview"
-              className="h-24 w-24 rounded-full border object-cover"
-            />
-          ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-primary/10 text-2xl font-bold text-brand-primary">
-              {form.full_name.charAt(0).toUpperCase() || "U"}
-            </div>
-          )}
+      {/* Profile Header */}
+      <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
+            <UserRound size={36} />
+          </div>
 
           <div>
-            <label
-              htmlFor="avatar"
-              className="inline-block cursor-pointer rounded-lg border border-border px-4 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/5"
-            >
-              Choose Image
+            <h2 className="text-xl font-bold text-brand-text">
+              {formData.full_name || "Your Profile"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {formData.headline || "Add your professional headline"}
+            </p>
+            <p className="mt-2 text-xs font-medium text-brand-secondary">
+              Manage your CareerBridge MM profile
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Personal Information */}
+      <section className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-brand-text">
+            Personal Information
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Update your basic contact information.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div>
+            <label className={labelClass}>
+              <UserRound size={15} className="mr-2 inline" />
+              Full Name *
             </label>
-
             <input
-              id="avatar"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleAvatarChange}
-              className="sr-only"
+              name="full_name"
+              value={formData.full_name}
+              onChange={handleChange}
+              required
+              className={inputClass}
+              placeholder="Enter your full name"
             />
+          </div>
 
+          <div>
+            <label className={labelClass}>
+              <Mail size={15} className="mr-2 inline" />
+              Email Address
+            </label>
+            <input
+              value={profile.email}
+              disabled
+              className={`${inputClass} cursor-not-allowed bg-gray-100 text-muted-foreground`}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Email cannot be changed here.
+            </p>
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <Phone size={15} className="mr-2 inline" />
+              Phone Number
+            </label>
+            <input
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className={inputClass}
+              placeholder="09-123456789"
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <MapPin size={15} className="mr-2 inline" />
+              Location
+            </label>
+            <input
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              className={inputClass}
+              placeholder="Yangon, Myanmar"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Professional Information */}
+      <section className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-brand-text">
+            Professional Information
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Help recruiters understand your experience and skills.
+          </p>
+        </div>
+
+        <div className="space-y-5">
+          <div>
+            <label className={labelClass}>
+              <BriefcaseBusiness size={15} className="mr-2 inline" />
+              Professional Headline
+            </label>
+            <input
+              name="headline"
+              value={formData.headline}
+              onChange={handleChange}
+              className={inputClass}
+              placeholder="Junior Frontend Developer"
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <FileText size={15} className="mr-2 inline" />
+              About Me
+            </label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={5}
+              className={`${inputClass} resize-y`}
+              placeholder="Tell recruiters about yourself, your experience, and your career goals..."
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <Code2 size={15} className="mr-2 inline" />
+              Skills
+            </label>
+            <input
+              value={formData.skills.join(", ")}
+              onChange={handleSkillsChange}
+              className={inputClass}
+              placeholder="React, Next.js, TypeScript"
+            />
             <p className="mt-2 text-xs text-muted-foreground">
-              PNG, JPG or WebP. Maximum 2 MB.
+              Separate each skill with a comma.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Personal Information */}
-      <section className="rounded-2xl border border-border bg-white p-6">
-        <h2 className="text-lg font-bold text-brand-text">
-          Personal Information
-        </h2>
-
-        <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <FormField
-            label="Full Name"
-            name="full_name"
-            value={form.full_name}
-            onChange={handleChange}
-            required
-          />
-
-          <FormField
-            label="Phone Number"
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-          />
-
-          <FormField
-            label="Location"
-            name="location"
-            value={form.location}
-            onChange={handleChange}
-            placeholder="Yangon, Myanmar"
-          />
-        </div>
-      </section>
-
-      {/* Professional Information */}
-      <section className="rounded-2xl border border-border bg-white p-6">
-        <h2 className="text-lg font-bold text-brand-text">
-          Professional Information
-        </h2>
-
-        <div className="mt-5">
-          <label
-            htmlFor="headline"
-            className="mb-2 block text-sm font-medium"
-          >
-            Professional Headline
-          </label>
-
-          <textarea
-            id="headline"
-            name="headline"
-            rows={3}
-            value={form.headline}
-            onChange={handleChange}
-            placeholder="Example: Junior Frontend Developer | React & Next.js"
-            className="w-full rounded-lg border border-border p-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
-          />
-        </div>
-
-        <div className="mt-5">
-          <label className="mb-2 block text-sm font-medium">
-            Skills
-          </label>
-
-          <div className="flex gap-2">
-            <input
-              value={skillInput}
-              onChange={(event) => setSkillInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addSkill();
-                }
-              }}
-              placeholder="Enter a skill"
-              className="h-11 min-w-0 flex-1 rounded-lg border border-border px-3 text-sm outline-none focus:border-brand-primary"
-            />
-
-            <button
-              type="button"
-              onClick={addSkill}
-              className="rounded-lg bg-brand-primary px-4 text-sm font-semibold text-white active:scale-95"
-            >
-              Add
-            </button>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {form.skills.map((skill) => (
-              <span
-                key={skill}
-                className="inline-flex items-center gap-2 rounded-full bg-brand-primary/10 px-3 py-2 text-sm text-brand-primary"
-              >
-                {skill}
-
-                <button
-                  type="button"
-                  onClick={() => removeSkill(skill)}
-                  aria-label={`Remove ${skill}`}
-                  className="font-bold"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Feedback */}
-      {message && (
-        <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
-          {message}
-        </p>
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {error}
+        </div>
       )}
 
-      {errorMessage && (
-        <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {errorMessage}
-        </p>
+      {success && (
+        <div
+          role="status"
+          className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+        >
+          {success}
+        </div>
       )}
 
       {/* Save Button */}
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={isSaving}
-          className="rounded-lg bg-brand-primary px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-primary/90 active:scale-95 disabled:opacity-60"
+          disabled={saving}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-8 py-3.5 font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
-          {isSaving ? "Saving..." : "Save Profile"}
+          <Save size={18} />
+          {saving ? "Saving..." : "Save Profile"}
         </button>
       </div>
     </form>
-  );
-}
-
-function FormField({
-  label,
-  name,
-  value,
-  onChange,
-  required = false,
-  placeholder,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  required?: boolean;
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <label
-        htmlFor={name}
-        className="mb-2 block text-sm font-medium"
-      >
-        {label}
-      </label>
-
-      <input
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        placeholder={placeholder}
-        className="h-11 w-full rounded-lg border border-border px-3 text-sm outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
-      />
-    </div>
   );
 }

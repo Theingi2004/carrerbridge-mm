@@ -1,42 +1,92 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { isDemoMode } from "@/lib/demo-mode";
+
+import {
+  demoUser,
+  demoRecruiter,
+} from "@/features/auth/data/demo-user";
+
 import ProfileForm from "@/features/profile/components/ProfileForm";
 import type { Profile } from "@/features/profile/types/profile.types";
 
-export default async function ProfilePage() {
-  const supabase = await createClient();
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<p className="p-8">Loading profile...</p>}>
+      <ProfilePageContent />
+    </Suspense>
+  );
+}
 
-  // Step 1: Check logged-in user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+async function ProfilePageContent() {
+  await connection();
 
-  if (!user) {
-    redirect("/login");
+  let profile: Profile;
+  let userId: string;
+
+  if (isDemoMode) {
+    const cookieStore = await cookies();
+
+    const demoSession = cookieStore.get("careerbridge_demo_session")?.value;
+    const demoRole = cookieStore.get("careerbridge_demo_role")?.value;
+
+    if (demoSession !== "true") {
+      redirect("/login");
+    }
+
+    const currentDemoUser =
+      demoRole === "recruiter" ? demoRecruiter : demoUser;
+
+    userId = currentDemoUser.id;
+
+    profile = {
+      id: currentDemoUser.id,
+      full_name: currentDemoUser.full_name,
+      email: currentDemoUser.email,
+      phone: currentDemoUser.phone,
+      location: currentDemoUser.location,
+      headline: currentDemoUser.headline,
+      bio: currentDemoUser.bio,
+      skills: currentDemoUser.skills,
+      avatar_url: currentDemoUser.avatar_url,
+    };
+  } else {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error || !data) {
+      return (
+        <main className="container-default py-16">
+          <h1 className="text-2xl font-bold">
+            Unable to load your profile
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Please try again later.
+          </p>
+        </main>
+      );
+    }
+
+    profile = data as Profile;
+    userId = user.id;
   }
-
-  // Step 2: Get user's profile from Supabase
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (error || !data) {
-    return (
-      <main className="container-default py-16">
-        <h1 className="text-2xl font-bold">
-          Unable to load your profile
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Please try again later.
-        </p>
-      </main>
-    );
-  }
-
-  const profile = data as Profile;
 
   return (
     <main className="min-h-screen bg-brand-background py-12">
@@ -55,7 +105,7 @@ export default async function ProfilePage() {
           </p>
         </div>
 
-        <ProfileForm profile={profile} userId={user.id} />
+        <ProfileForm profile={profile} userId={userId} />
       </div>
     </main>
   );

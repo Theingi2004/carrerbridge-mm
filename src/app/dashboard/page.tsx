@@ -2,9 +2,11 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
-
+import MyJobPosts from "@/features/job/components/MyJobPosts";
 import { createClient } from "@/lib/supabase/server";
 import { isDemoMode } from "@/lib/demo-mode";
+import RecruiterApplications from "@/features/applications/components/RecruiterApplications";
+import { initializeDemoRecruiterJobs } from "@/features/job/services/job.service";
 import {
   demoUser,
   demoRecruiter,
@@ -53,7 +55,9 @@ async function DashboardContent() {
         : demoUser;
 
     const isRecruiter = currentUser.role === "recruiter";
-
+    if (isRecruiter) {
+      initializeDemoRecruiterJobs();
+    }
     return (
       <main className="min-h-screen bg-brand-background py-12">
         <div className="container-default">
@@ -134,15 +138,9 @@ async function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="mt-6">
-                    <a
-                      href="/dashboard/post-job"
-                      className="inline-flex items-center rounded-lg bg-brand-primary px-6 py-3 font-semibold text-white transition hover:opacity-90"
-                    >
-                      + Post a Job
-                    </a>
-                  </div>
                 </div>
+                <MyJobPosts />
+                <RecruiterApplications />
               </div>
             )}
 

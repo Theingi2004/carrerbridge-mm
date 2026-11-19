@@ -18,7 +18,10 @@ export default function JobsPage() {
     setCreatedJobs(getCreatedJobs());
   }, []);
 
-  const allJobs = [...createdJobs, ...jobs];
+  const allJobs = [
+    ...createdJobs.filter((job) => job.status === "active"),
+    ...jobs,
+  ];
   const filteredJobs = useMemo(() => {
     return allJobs.filter((job) => {
       const searchText = search.toLowerCase().trim();
@@ -34,12 +37,15 @@ export default function JobsPage() {
       const categoryMap: Record<string, string[]> = {
         frontend: ["frontend development", "frontend"],
         backend: ["backend development", "backend"],
+        "full-stack": ["full stack development", "full stack"],
         "ui-ux": ["ui/ux design"],
         mobile: ["mobile development"],
+        qa: ["quality assurance"],
         data: ["data analysis", "data & analytics"],
         devops: ["devops", "devops & cloud"],
+        "it-support": ["it support"],
+        wordpress: ["wordpress development", "wordpress"],
       };
-
       const matchesCategory =
         category === "all" ||
         (categoryMap[category] ?? []).includes(
@@ -126,10 +132,14 @@ export default function JobsPage() {
                 <option value="all">All Categories</option>
                 <option value="frontend">Frontend Development</option>
                 <option value="backend">Backend Development</option>
+                <option value="full-stack">Full Stack Development</option>
                 <option value="ui-ux">UI/UX Design</option>
                 <option value="mobile">Mobile Development</option>
-                <option value="data">Data & Analytics</option>
-                <option value="devops">DevOps & Cloud</option>
+                <option value="qa">Quality Assurance</option>
+                <option value="data">Data Analysis</option>
+                <option value="devops">DevOps</option>
+                <option value="it-support">IT Support</option>
+                <option value="wordpress">WordPress Development</option>
               </select>
 
               {/* Employment Type */}

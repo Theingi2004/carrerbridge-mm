@@ -1,19 +1,22 @@
+
 export interface Profile {
   id: string;
   full_name: string;
-  phone: string | null;
-  avatar_url: string | null;
-  headline: string | null;
-  location: string | null;
+  email: string;
+  phone: string;
+  location: string;
+  headline: string;
+  bio: string;
   skills: string[];
-  created_at: string;
-  updated_at: string;
+  avatar_url: string | null;
 }
 
-export interface ProfileFormValues {
+export interface UpdateProfileInput {
   full_name: string;
   phone: string;
-  headline: string;
   location: string;
+  headline: string;
+  bio: string;
   skills: string[];
+  avatar_url: string | null;
 }

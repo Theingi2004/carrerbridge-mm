@@ -1,8 +1,45 @@
 
+"use client";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 
+import { useEffect, useState } from "react";
+import { isDemoMode } from "@/lib/demo-mode";
+import { createClient } from "@/lib/supabase/client";
 export default function CareerCTA() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  useEffect(() => {
+    if (isDemoMode) {
+      const hasDemoSession = document.cookie
+        .split("; ")
+        .some((cookie) => cookie === "careerbridge_demo_session=true");
+
+      setIsAuthenticated(hasDemoSession);
+      setIsAuthLoading(false);
+      return;
+    }
+
+    const supabase = createClient();
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!error) {
+        setIsAuthenticated(Boolean(data.session));
+      }
+
+      setIsAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(Boolean(session));
+      setIsAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   return (
     <section className="bg-white py-16 sm:py-20">
       <div className="container-default">
@@ -29,9 +66,10 @@ export default function CareerCTA() {
             </p>
 
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link
-                href="/register"
-                className="
+              {!isAuthLoading && (
+                <Link
+                  href={isAuthenticated ? "/dashboard" : "/register"}
+                  className="
                   inline-flex items-center justify-center gap-2
                   rounded-lg bg-white px-7 py-3.5
                   text-sm font-semibold text-brand-primary
@@ -39,21 +77,22 @@ export default function CareerCTA() {
                   hover:bg-white/90 hover:shadow-lg
                   active:scale-95
                 "
-              >
-                Create Your Account
-                <ArrowRight size={18} />
-              </Link>
+                >
+                  {isAuthenticated ? "My Dashboard" : "Create Your Account"}
+                  <ArrowRight size={18} />
+                </Link>
+              )}
 
               <Link
                 href="/job"
                 className="
-                  inline-flex items-center justify-center
-                  rounded-lg border border-white/30 px-7 py-3.5
-                  text-sm font-semibold text-white
-                  transition-all duration-200 ease-out
-                  hover:bg-white/10
-                  active:scale-95
-                "
+                inline-flex items-center justify-center
+                rounded-lg border border-white/30 px-7 py-3.5
+                text-sm font-semibold text-white
+                transition-all duration-200 ease-out
+                hover:bg-white/10
+                active:scale-95
+              "
               >
                 Explore Jobs
               </Link>

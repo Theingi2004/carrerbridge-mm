@@ -1,5 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   MapPin,
@@ -11,6 +13,8 @@ import {
 } from "lucide-react";
 
 import { jobs } from "../data/jobs";
+import { getCreatedJobs } from "../services/job.service";
+import type { Job } from "../types/job.types";
 
 interface JobDetailsPageProps {
   jobId: string;
@@ -19,11 +23,59 @@ interface JobDetailsPageProps {
 export default function JobDetailsPage({
   jobId,
 }: JobDetailsPageProps) {
-  const job = jobs.find((item) => item.id === jobId);
+  const [job, setJob] = useState<Job | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Show Next.js 404 page if the job doesn't exist.
+  useEffect(() => {
+    // Search original sample jobs
+    const sampleJob = jobs.find(
+      (item) => item.id === jobId
+    );
+
+    // Search recruiter-created jobs
+    const createdJob = getCreatedJobs().find(
+      (item) => item.id === jobId
+    );
+
+    const foundJob = createdJob ?? sampleJob;
+
+    // Do not show closed recruiter jobs publicly
+    if (createdJob?.status === "closed") {
+      setJob(null);
+    } else {
+      setJob(foundJob ?? null);
+    }
+
+    setIsLoading(false);
+  }, [jobId]);
+
+  if (isLoading) {
+    return (
+      <div className="container-default py-12">
+        Loading job details...
+      </div>
+    );
+  }
+
   if (!job) {
-    notFound();
+    return (
+      <main className="container-default py-20 text-center">
+        <h1 className="text-2xl font-bold text-brand-text">
+          Job Not Found
+        </h1>
+
+        <p className="mt-3 text-muted-foreground">
+          This job may no longer be available.
+        </p>
+
+        <Link
+          href="/job"
+          className="mt-6 inline-block rounded-lg bg-brand-primary px-5 py-3 text-sm font-semibold text-white"
+        >
+          Back to Jobs
+        </Link>
+      </main>
+    );
   }
 
   return (

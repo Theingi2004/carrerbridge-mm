@@ -9,22 +9,16 @@ import { isDemoMode } from "@/lib/demo-mode";
 import { demoUser } from "@/features/auth/data/demo-user";
 
 import ApplyJobForm from "@/features/applications/components/ApplyJobForm";
-import { jobs } from "@/features/job/data/jobs";
-
+import DemoApplyJobPage from "@/features/applications/components/DemoApplyJobPage";
 interface PageProps {
   params: Promise<{ id: string }>;
 }
+
 
 async function ApplyPageContent({ params }: PageProps) {
   await connection();
 
   const { id } = await params;
-
-  const job = jobs.find((item) => item.id === id);
-
-  if (!job) {
-    notFound();
-  }
 
   let userId: string;
 
@@ -37,20 +31,36 @@ async function ApplyPageContent({ params }: PageProps) {
       redirect("/login");
     }
 
-    userId = demoUser.id;
-  } else {
-    // REAL SUPABASE AUTHENTICATION
-    const supabase = await createClient();
+    return (
+      <DemoApplyJobPage
+        jobId={id}
+        userId={demoUser.id}
+      />
+    );
+  }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  // REAL SUPABASE AUTHENTICATION
+  const supabase = await createClient();
 
-    if (!user) {
-      redirect("/login");
-    }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    userId = user.id;
+  if (!user) {
+    redirect("/login");
+  }
+
+  userId = user.id;
+
+  // Preserve the existing Supabase job lookup for now.
+  const { data: job, error } = await supabase
+    .from("jobs")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !job) {
+    notFound();
   }
 
   return (

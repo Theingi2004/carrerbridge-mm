@@ -1,10 +1,10 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { isDemoMode } from "@/lib/demo-mode";
-import { demoUser } from "@/features/auth/data/demo-user";
-
+import { getCreatedJobs } from "@/features/job/services/job.service";
 import type {
   Application,
+  ApplicationStatus,
   CreateApplicationInput,
 } from "../types/application.types";
 
@@ -116,4 +116,91 @@ export async function getMyApplications(
   }
 
   return (data ?? []) as Application[];
+}
+// Get applications submitted for this recruiter's jobs
+export async function getApplicationsForRecruiter(
+  recruiterId: string
+): Promise<Application[]> {
+  // DEMO MODE
+  if (isDemoMode) {
+    const applications = getDemoApplications();
+    const jobs = getCreatedJobs();
+
+    // Find jobs belonging to this recruiter
+    const recruiterJobIds = jobs
+      .filter((job) => job.recruiterId === recruiterId)
+      .map((job) => job.id);
+
+    // Find applications submitted for those jobs
+    return applications.filter((application) =>
+      recruiterJobIds.includes(application.job_id)
+    );
+  }
+
+  // Supabase recruiter query will be connected
+  // after checking the database relationship.
+  throw new Error(
+    "Recruiter application management is not configured for Supabase yet."
+  );
+}
+// Check whether a job has any applications
+export async function hasApplicationsForJob(
+  jobId: string
+): Promise<boolean> {
+  // DEMO MODE
+  if (isDemoMode) {
+    const applications = getDemoApplications();
+
+    return applications.some(
+      (application) => application.job_id === jobId
+    );
+  }
+
+  // REAL SUPABASE MODE
+  const supabase = createClient();
+
+  const { count, error } = await supabase
+    .from("applications")
+    .select("*", { count: "exact", head: true })
+    .eq("job_id", jobId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (count ?? 0) > 0;
+}
+
+// Update an application's status
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: ApplicationStatus
+): Promise<void> {
+  // DEMO MODE
+  if (isDemoMode) {
+    const applications = getDemoApplications();
+
+    const updatedApplications = applications.map((application) =>
+      application.id === applicationId
+        ? {
+          ...application,
+          status,
+          updated_at: new Date().toISOString(),
+        }
+        : application
+    );
+
+    localStorage.setItem(
+      DEMO_APPLICATIONS_KEY,
+      JSON.stringify(updatedApplications)
+    );
+
+    return;
+  }
+
+  // Supabase implementation will be added
+  // after verifying the database permissions and relationships.
+  throw new Error(
+    "Application status updates are not configured for Supabase yet."
+  );
 }

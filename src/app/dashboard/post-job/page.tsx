@@ -1,7 +1,59 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+import { createClient } from "@/lib/supabase/server";
+import { isDemoMode } from "@/lib/demo-mode";
+import { demoRecruiter } from "@/features/auth/data/demo-user";
 
 import PostJobForm from "@/features/job/components/PostJobForm";
 
 export default function PostJobPage() {
+  return (
+    <Suspense fallback={<p className="p-8">Loading...</p>}>
+      <PostJobContent />
+    </Suspense>
+  );
+}
+
+async function PostJobContent() {
+  await connection();
+
+  // DEMO MODE AUTHENTICATION
+  if (isDemoMode) {
+    const cookieStore = await cookies();
+
+    const demoSession = cookieStore.get("careerbridge_demo_session");
+    const demoRole = cookieStore.get("careerbridge_demo_role");
+
+    if (demoSession?.value !== "true") {
+      redirect("/login");
+    }
+
+    if (
+      demoRole?.value !== "recruiter" ||
+      !demoRecruiter
+    ) {
+      redirect("/dashboard");
+    }
+  } else {
+    // REAL SUPABASE AUTHENTICATION
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    // Recruiter role verification will be added
+    // after confirming where your Supabase project stores user roles.
+    redirect("/dashboard");
+  }
+
   return (
     <main className="min-h-screen bg-brand-background py-12">
       <div className="container-default">

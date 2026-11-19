@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,11 +14,50 @@ import DesktopNav from "./DesktopNav";
 import MobileNav from "./MobileNav";
 import { navLinks } from "./nav-links";
 
+import { isDemoMode } from "@/lib/demo-mode";
+import { createClient } from "@/lib/supabase/client";
+
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   const pathname = usePathname();
 
   const closeMenu = () => setIsMenuOpen(false);
+
+  useEffect(() => {
+    if (isDemoMode) {
+      const hasDemoSession = document.cookie
+        .split("; ")
+        .some((cookie) => cookie === "careerbridge_demo_session=true");
+
+      setIsAuthenticated(hasDemoSession);
+      setIsAuthLoading(false);
+      return;
+    }
+
+    const supabase = createClient();
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!error) {
+        setIsAuthenticated(Boolean(data.session));
+      }
+
+      setIsAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(Boolean(session));
+      setIsAuthLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur-md">
@@ -53,29 +91,32 @@ export default function Navbar() {
 
         {/* Desktop Actions */}
         <div className="hidden items-center gap-5 lg:flex">
-          <Link
-            href="/login"
-            className="text-sm font-semibold text-brand-text transition-colors hover:text-brand-primary "
-          >
-            Log in
-          </Link>
+          {!isAuthLoading &&
+            (isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="rounded-lg bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-primary/90"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-semibold text-brand-text transition-colors hover:text-brand-primary"
+                >
+                  Log in
+                </Link>
 
-          <Link
-            href="/register"
-            className="
-    flex items-center gap-2
-    rounded-lg bg-brand-primary
-    px-5 py-3
-    text-sm font-semibold text-white
-    transition-all duration-200 ease-out
-    hover:bg-brand-primary/90
-    hover:shadow-md
-    active:scale-95
-  "
-          >
-            Get Started
-            <ArrowRight size={16} />
-          </Link>
+                <Link
+                  href="/register"
+                  className="flex items-center gap-2 rounded-lg bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition-all duration-200 ease-out hover:bg-brand-primary/90 hover:shadow-md active:scale-95"
+                >
+                  Get Started
+                  <ArrowRight size={16} />
+                </Link>
+              </>
+            ))}
         </div>
 
         {/* Mobile Toggle */}
@@ -102,6 +143,8 @@ export default function Navbar() {
             links={navLinks}
             pathname={pathname}
             onClose={closeMenu}
+            isAuthenticated={isAuthenticated}
+            isAuthLoading={isAuthLoading}
           />
         </div>
       )}

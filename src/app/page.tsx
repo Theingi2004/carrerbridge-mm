@@ -1,4 +1,6 @@
+import AboutSection from "@/features/home/components/AboutSection";
 import CareerCTA from "@/features/home/components/CareerCTA";
+import CareerResources from "@/features/home/components/CareerResources";
 import FeaturedJobs from "@/features/home/components/FeaturedJobs";
 import HeroSection from "@/features/home/components/HeroSection";
 import HowItWorks from "@/features/home/components/HowItWorks";
@@ -12,6 +14,8 @@ export default function Home() {
       <JobCategories />
       <HowItWorks />
       <CareerCTA />
+      <CareerResources />
+      <AboutSection />
     </main>
   );
 }

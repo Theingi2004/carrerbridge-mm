@@ -1,11 +1,17 @@
 
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   UserRoundPlus,
   Search,
   Send,
   ArrowRight,
 } from "lucide-react";
+
+import { isDemoMode } from "@/lib/demo-mode";
+import { createClient } from "@/lib/supabase/client";
 
 const steps = [
   {
@@ -32,6 +38,40 @@ const steps = [
 ];
 
 export default function HowItWorks() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  useEffect(() => {
+    if (isDemoMode) {
+      const hasDemoSession = document.cookie
+        .split("; ")
+        .some((cookie) => cookie === "careerbridge_demo_session=true");
+
+      setIsAuthenticated(hasDemoSession);
+      setIsAuthLoading(false);
+      return;
+    }
+
+    const supabase = createClient();
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!error) {
+        setIsAuthenticated(Boolean(data.session));
+      }
+
+      setIsAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(Boolean(session));
+      setIsAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="container-default">
@@ -98,20 +138,22 @@ export default function HowItWorks() {
 
         {/* Call to Action */}
         <div className="mt-12 text-center">
-          <Link
-            href="/register"
-            className="
-              inline-flex items-center justify-center gap-2
-              rounded-lg bg-brand-primary px-7 py-3.5
-              text-sm font-semibold text-white
-              transition-all duration-200 ease-out
-              hover:shadow-md
-              active:scale-95
-            "
-          >
-            Get Started Today
-            <ArrowRight size={18} />
-          </Link>
+          {!isAuthLoading && (
+            <Link
+              href={isAuthenticated ? "/dashboard" : "/register"}
+              className="
+                inline-flex items-center justify-center gap-2
+                rounded-lg bg-brand-primary px-7 py-3.5
+                text-sm font-semibold text-white
+                transition-all duration-200 ease-out
+                hover:shadow-md
+                active:scale-95
+              "
+            >
+              {isAuthenticated ? "Go to Dashboard" : "Get Started Today"}
+              <ArrowRight size={18} />
+            </Link>
+          )}
         </div>
 
       </div>

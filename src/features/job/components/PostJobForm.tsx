@@ -1,12 +1,36 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createJob } from "../services/job.service";
+
+import {
+  createJob,
+  getJobById,
+  updateJob,
+} from "../services/job.service";
+
 import type { Job } from "../types/job.types";
 import { demoRecruiter } from "@/features/auth/data/demo-user";
-export default function PostJobForm() {
+
+interface PostJobFormProps {
+  jobId?: string;
+}
+
+const IT_JOB_CATEGORIES: string[] = [
+  "Frontend Development",
+  "Backend Development",
+  "Full Stack Development",
+  "Mobile Development",
+  "UI/UX Design",
+  "Quality Assurance",
+  "Data Analysis",
+  "DevOps",
+  "IT Support",
+  "WordPress Development",
+];
+
+export default function PostJobForm({ jobId }: PostJobFormProps) {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -25,6 +49,42 @@ export default function PostJobForm() {
   });
 
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(Boolean(jobId));
+
+  useEffect(() => {
+    if (!jobId) return;
+
+    const existingJob = getJobById(jobId);
+
+    if (!existingJob) {
+      setError("Job not found.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (existingJob.recruiterId !== demoRecruiter.id) {
+      setError("You are not authorized to edit this job.");
+      setIsLoading(false);
+      return;
+    }
+
+    setFormData({
+      title: existingJob.title,
+      company: existingJob.company,
+      location: existingJob.location,
+      employmentType: existingJob.employmentType,
+      experienceLevel: existingJob.experienceLevel,
+      salary: existingJob.salary,
+      category: existingJob.category,
+      tags: existingJob.tags.join(", "),
+      description: existingJob.description,
+      responsibilities: existingJob.responsibilities.join("\n"),
+      requirements: existingJob.requirements.join("\n"),
+      benefits: existingJob.benefits.join("\n"),
+    });
+
+    setIsLoading(false);
+  }, [jobId]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -39,31 +99,89 @@ export default function PostJobForm() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
 
-    const newJob: Job = {
-      id: crypto.randomUUID(),
+    // Get the existing job when editing.
+    const existingJob = jobId ? getJobById(jobId) : undefined;
+
+    // Check job ownership.
+    if (
+      jobId &&
+      (!existingJob || existingJob.recruiterId !== demoRecruiter.id)
+    ) {
+      setError(
+        !existingJob
+          ? "Job not found."
+          : "You are not authorized to edit this job."
+      );
+      return;
+    }
+
+    // Set the original posting date.
+    const postedAt = existingJob?.postedAt ?? new Date().toISOString();
+
+    // New jobs expire after 30 days.
+    const expiresAt =
+      existingJob?.expiresAt ??
+      new Date(
+        new Date(postedAt).getTime() + 30 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+    const jobData: Job = {
+      id: jobId ?? crypto.randomUUID(),
       recruiterId: demoRecruiter.id,
       title: formData.title.trim(),
+      status: existingJob?.status ?? "active",
       company: formData.company.trim(),
       location: formData.location.trim(),
       employmentType: formData.employmentType,
       experienceLevel: formData.experienceLevel,
       salary: formData.salary.trim(),
-      postedAt: new Date().toISOString(),
+      postedAt,
+      expiresAt,
       category: formData.category,
-      tags: formData.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+      tags: formData.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
       description: formData.description.trim(),
-      responsibilities: formData.responsibilities.split("\n").map((item) => item.trim()).filter(Boolean),
-      requirements: formData.requirements.split("\n").map((item) => item.trim()).filter(Boolean),
-      benefits: formData.benefits.split("\n").map((item) => item.trim()).filter(Boolean),
+      responsibilities: formData.responsibilities
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      requirements: formData.requirements
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      benefits: formData.benefits
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
     };
 
-    if (!newJob.title || !newJob.company || !newJob.description || !newJob.category) {
+    // Check required fields.
+    if (
+      !jobData.title ||
+      !jobData.company ||
+      !jobData.description ||
+      !jobData.category
+    ) {
       setError("Please complete all required fields.");
       return;
     }
 
-    createJob(newJob);
+    // Validate IT job category.
+    if (!IT_JOB_CATEGORIES.includes(jobData.category)) {
+      setError("Please select a valid IT job category.");
+      return;
+    }
+
+    // Create or update job.
+    if (jobId) {
+      updateJob(jobData, demoRecruiter.id);
+    } else {
+      createJob(jobData);
+    }
 
     router.push("/dashboard");
     router.refresh();
@@ -72,10 +190,36 @@ export default function PostJobForm() {
   const inputClass =
     "w-full rounded-lg border border-border bg-white px-4 py-3 text-sm outline-none focus:border-brand-primary";
 
+  if (isLoading) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Loading job...
+      </p>
+    );
+  }
+
+  if (jobId && error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-5">
+        <p className="font-medium text-red-700">{error}</p>
+
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard")}
+          className="mt-4 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white"
+        >
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="mb-2 block text-sm font-medium">Job Title *</label>
+        <label className="mb-2 block text-sm font-medium">
+          Job Title *
+        </label>
         <input
           name="title"
           value={formData.title}
@@ -87,7 +231,9 @@ export default function PostJobForm() {
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium">Company Name *</label>
+        <label className="mb-2 block text-sm font-medium">
+          Company Name *
+        </label>
         <input
           name="company"
           value={formData.company}
@@ -99,7 +245,9 @@ export default function PostJobForm() {
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium">Location</label>
+        <label className="mb-2 block text-sm font-medium">
+          Location
+        </label>
         <input
           name="location"
           value={formData.location}
@@ -111,8 +259,15 @@ export default function PostJobForm() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm font-medium">Employment Type</label>
-          <select name="employmentType" value={formData.employmentType} onChange={handleChange} className={inputClass}>
+          <label className="mb-2 block text-sm font-medium">
+            Employment Type
+          </label>
+          <select
+            name="employmentType"
+            value={formData.employmentType}
+            onChange={handleChange}
+            className={inputClass}
+          >
             <option>Full-time</option>
             <option>Part-time</option>
             <option>Internship</option>
@@ -122,8 +277,15 @@ export default function PostJobForm() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">Experience Level</label>
-          <select name="experienceLevel" value={formData.experienceLevel} onChange={handleChange} className={inputClass}>
+          <label className="mb-2 block text-sm font-medium">
+            Experience Level
+          </label>
+          <select
+            name="experienceLevel"
+            value={formData.experienceLevel}
+            onChange={handleChange}
+            className={inputClass}
+          >
             <option>Entry Level</option>
             <option>Junior</option>
             <option>Mid Level</option>
@@ -133,60 +295,93 @@ export default function PostJobForm() {
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium">Salary</label>
-        <input name="salary" value={formData.salary} onChange={handleChange} className={inputClass} placeholder="e.g. Negotiable" />
+        <label className="mb-2 block text-sm font-medium">
+          Salary
+        </label>
+        <input
+          name="salary"
+          value={formData.salary}
+          onChange={handleChange}
+          className={inputClass}
+          placeholder="e.g. Negotiable"
+        />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium">IT Job Category *</label>
-        <select name="category" value={formData.category} onChange={handleChange} required className={inputClass}>
+        <label className="mb-2 block text-sm font-medium">
+          IT Job Category *
+        </label>
+        <select
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          required
+          className={inputClass}
+        >
           <option value="">Select category</option>
-          <option>Frontend Development</option>
-          <option>Backend Development</option>
-          <option>Full Stack Development</option>
-          <option>Mobile Development</option>
-          <option>UI/UX Design</option>
-          <option>Quality Assurance</option>
-          <option>Data Analysis</option>
-          <option>DevOps</option>
-          <option>IT Support</option>
-          <option>WordPress Development</option>
+
+          {IT_JOB_CATEGORIES.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
         </select>
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium">Tags (comma separated)</label>
-        <input name="tags" value={formData.tags} onChange={handleChange} className={inputClass} placeholder="React, TypeScript, Next.js" />
+        <label className="mb-2 block text-sm font-medium">
+          Tags (comma separated)
+        </label>
+        <input
+          name="tags"
+          value={formData.tags}
+          onChange={handleChange}
+          className={inputClass}
+          placeholder="React, TypeScript, Next.js"
+        />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium">Job Description *</label>
-        <textarea name="description" value={formData.description} onChange={handleChange} required rows={5} className={inputClass} />
+        <label className="mb-2 block text-sm font-medium">
+          Job Description *
+        </label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+          rows={5}
+          className={inputClass}
+        />
       </div>
 
-      {(["responsibilities", "requirements", "benefits"] as const).map((field) => (
-        <div key={field}>
-          <label className="mb-2 block text-sm font-medium capitalize">
-            {field} (one item per line)
-          </label>
-          <textarea
-            name={field}
-            value={formData[field]}
-            onChange={handleChange}
-            rows={4}
-            className={inputClass}
-            placeholder="Enter one item per line"
-          />
-        </div>
-      ))}
+      {(["responsibilities", "requirements", "benefits"] as const).map(
+        (field) => (
+          <div key={field}>
+            <label className="mb-2 block text-sm font-medium capitalize">
+              {field} (one item per line)
+            </label>
+            <textarea
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              rows={4}
+              className={inputClass}
+              placeholder="Enter one item per line"
+            />
+          </div>
+        )
+      )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
 
       <button
         type="submit"
         className="w-full rounded-lg bg-brand-primary px-5 py-3 font-semibold text-white hover:opacity-90"
       >
-        Post Job
+        {jobId ? "Update Job" : "Post Job"}
       </button>
     </form>
   );
