@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { createJob, getJobById, updateJob } from "../services/job.service";
 import { demoRecruiter } from "@/features/auth/data/demo-user";
 import { useRouter } from "next/navigation";
+import { ThemeSelect } from "@/components/ui/theme-select";
 
 const STORAGE_KEY = "careerbridge-demo-jobs";
 
@@ -279,35 +280,45 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
           <label className="mb-2 block text-sm font-medium">
             Employment Type
           </label>
-          <select
+          <ThemeSelect
             name="employmentType"
             value={formData.employmentType}
-            onChange={handleChange}
-            className={inputClass}
-          >
-            <option>Full-time</option>
-            <option>Part-time</option>
-            <option>Internship</option>
-            <option>Contract</option>
-            <option>Remote</option>
-          </select>
+            onValueChange={(value) =>
+              setFormData((current) => ({
+                ...current,
+                employmentType: value,
+              }))
+            }
+            options={[
+              { value: "Full-time", label: "Full-time" },
+              { value: "Part-time", label: "Part-time" },
+              { value: "Internship", label: "Internship" },
+              { value: "Contract", label: "Contract" },
+              { value: "Remote", label: "Remote" },
+            ]}
+          />
         </div>
 
         <div>
           <label className="mb-2 block text-sm font-medium">
             Experience Level
           </label>
-          <select
+          <ThemeSelect
             name="experienceLevel"
             value={formData.experienceLevel}
-            onChange={handleChange}
-            className={inputClass}
-          >
-            <option>Entry Level</option>
-            <option>Junior</option>
-            <option>Mid Level</option>
-            <option>Senior</option>
-          </select>
+            onValueChange={(value) =>
+              setFormData((current) => ({
+                ...current,
+                experienceLevel: value,
+              }))
+            }
+            options={[
+              { value: "Entry Level", label: "Entry Level" },
+              { value: "Junior", label: "Junior" },
+              { value: "Mid Level", label: "Mid Level" },
+              { value: "Senior", label: "Senior" },
+            ]}
+          />
         </div>
       </div>
 
@@ -328,21 +339,22 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
         <label className="mb-2 block text-sm font-medium">
           IT Job Category *
         </label>
-        <select
+        <ThemeSelect
           name="category"
           value={formData.category}
-          onChange={handleChange}
+          onValueChange={(value) =>
+            setFormData((current) => ({
+              ...current,
+              category: value,
+            }))
+          }
           required
-          className={inputClass}
-        >
-          <option value="">Select category</option>
-
-          {IT_JOB_CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
+          placeholder="Select category"
+          options={IT_JOB_CATEGORIES.map((category) => ({
+            value: category,
+            label: category,
+          }))}
+        />
       </div>
 
       <div>

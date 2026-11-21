@@ -8,17 +8,22 @@ import {
 
 }
   from "../services/job.service";
+import useSavedJobs from "@/features/job/hooks/useSavedJobs";
 import type { Job } from "../types/job.types";
 import { jobs } from "../data/jobs";
 import JobCard from "@/features/home/components/JobCard";
 import { isDemoMode } from "@/lib/demo-mode";
+import { ThemeSelect } from "@/components/ui/theme-select";
 export default function JobsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [employmentType, setEmploymentType] = useState("all");
   const [createdJobs, setCreatedJobs] = useState<Job[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-
+  const {
+    savedJobIds,
+    toggleSavedJob,
+  } = useSavedJobs();
   const jobsPerPage = 9;
 
   // Reset pagination when filters change
@@ -178,40 +183,40 @@ export default function JobsPage() {
               </div>
 
               {/* Category */}
-              <select
+              <ThemeSelect
                 value={category}
-                onChange={(event) => setCategory(event.target.value)}
+                onValueChange={setCategory}
                 aria-label="Filter by category"
-                className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
-              >
-                <option value="all">All Categories</option>
-                <option value="frontend">Frontend Development</option>
-                <option value="backend">Backend Development</option>
-                <option value="full-stack">Full Stack Development</option>
-                <option value="ui-ux">UI/UX Design</option>
-                <option value="mobile">Mobile Development</option>
-                <option value="qa">Quality Assurance</option>
-                <option value="data">Data Analysis</option>
-                <option value="devops">DevOps</option>
-                <option value="it-support">IT Support</option>
-                <option value="wordpress">WordPress Development</option>
-              </select>
+                className="sm:min-w-48"
+                options={[
+                  { value: "all", label: "All Categories" },
+                  { value: "frontend", label: "Frontend Development" },
+                  { value: "backend", label: "Backend Development" },
+                  { value: "full-stack", label: "Full Stack Development" },
+                  { value: "ui-ux", label: "UI/UX Design" },
+                  { value: "mobile", label: "Mobile Development" },
+                  { value: "qa", label: "Quality Assurance" },
+                  { value: "data", label: "Data Analysis" },
+                  { value: "devops", label: "DevOps" },
+                  { value: "it-support", label: "IT Support" },
+                  { value: "wordpress", label: "WordPress Development" },
+                ]}
+              />
 
               {/* Employment Type */}
-              <select
+              <ThemeSelect
                 value={employmentType}
-                onChange={(event) =>
-                  setEmploymentType(event.target.value)
-                }
+                onValueChange={setEmploymentType}
                 aria-label="Filter by employment type"
-                className="h-12 rounded-lg border border-border bg-white px-4 text-sm text-brand-text outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10"
-              >
-                <option value="all">All Employment Types</option>
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-              </select>
+                className="sm:min-w-48"
+                options={[
+                  { value: "all", label: "All Employment Types" },
+                  { value: "Full-time", label: "Full-time" },
+                  { value: "Part-time", label: "Part-time" },
+                  { value: "Contract", label: "Contract" },
+                  { value: "Internship", label: "Internship" },
+                ]}
+              />
             </div>
 
             <div className="mt-4 flex justify-end">
@@ -247,7 +252,12 @@ export default function JobsPage() {
               <>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {currentJobs.map((job) => (
-                    <JobCard key={job.id} job={job} />
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      isSaved={savedJobIds.includes(job.id)}
+                      onToggleSave={toggleSavedJob}
+                    />
                   ))}
                 </div>
                 {/* Pagination */}

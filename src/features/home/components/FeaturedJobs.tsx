@@ -4,8 +4,13 @@ import { ArrowRight } from "lucide-react";
 
 import { featuredJobs } from "../data/featured-jobs";
 import JobCard from "./JobCard";
+import useSavedJobs from "@/features/job/hooks/useSavedJobs";
 
 export default function FeaturedJobs() {
+  const {
+    savedJobIds,
+    toggleSavedJob,
+  } = useSavedJobs();
   return (
     <section className="bg-white py-20 sm:py-24">
       <div className="container-default">
@@ -38,7 +43,12 @@ export default function FeaturedJobs() {
         {/* Job Cards */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {featuredJobs.map((job) => (
-            <JobCard key={job.id} job={job} />
+            <JobCard
+              key={job.id}
+              job={job}
+              isSaved={savedJobIds.includes(job.id)}
+              onToggleSave={toggleSavedJob}
+            />
           ))}
         </div>
       </div>

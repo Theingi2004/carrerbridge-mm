@@ -2,6 +2,7 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
+  Bookmark,
   BriefcaseBusiness,
   Clock3,
   MapPin,
@@ -11,19 +12,41 @@ import type { Job } from "../types/job.types";
 
 interface JobCardProps {
   job: Job;
+  isSaved: boolean;
+  onToggleSave: (jobId: string) => void;
 }
-
-export default function JobCard({ job }: JobCardProps) {
+export default function JobCard({
+  job,
+  isSaved,
+  onToggleSave,
+}: JobCardProps) {
   return (
     <article className="group flex h-full flex-col rounded-2xl border border-border bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:border-brand-primary/30 hover:shadow-lg">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-primary/10 text-brand-primary">
           <BriefcaseBusiness size={23} />
         </div>
 
-        <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-semibold text-brand-primary">
-          {job.employmentType}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-xs font-semibold text-brand-primary">
+            {job.employmentType}
+          </span>
+          <button
+            type="button"
+            onClick={() => onToggleSave(job.id)}
+            aria-label={isSaved ? "Remove saved job" : "Save job"}
+            aria-pressed={isSaved}
+            className={`flex size-9 items-center justify-center rounded-full border transition-colors ${isSaved
+              ? "border-brand-primary bg-brand-primary/10 text-brand-primary"
+              : "border-border text-muted-foreground hover:border-brand-primary hover:text-brand-primary"
+              }`}
+          >
+            <Bookmark
+              size={18}
+              fill={isSaved ? "currentColor" : "none"}
+            />
+          </button>
+        </div>
       </div>
 
       <div className="mt-5">

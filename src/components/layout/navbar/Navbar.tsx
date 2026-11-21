@@ -6,10 +6,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowRight,
+  Bookmark,
   BriefcaseBusiness,
   Menu,
   X,
-  ChevronDown,
   UserRound,
   LayoutDashboard,
   Users,
@@ -51,6 +51,7 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsDropdownOpen(false);
+
     if (isDemoMode) {
       const hasDemoSession = document.cookie
         .split("; ")
@@ -156,13 +157,13 @@ export default function Navbar() {
                   }
                   aria-expanded={isDropdownOpen}
                   aria-label="Open account menu"
-                  className="cursor-pointer flex size-11 items-center justify-center rounded-full bg-brand-primary text-sm font-bold text-white transition-colors hover:bg-brand-primary/90"
+                  className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-brand-primary text-sm font-bold text-white transition-colors hover:bg-brand-primary/90"
                 >
                   {getInitials(fullName)}
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute left-2/3 -translate-x-2/3 top-full z-50 mt-3 w-60 rounded-xl border border-border bg-white p-2  shadow-lg">
+                  <div className="absolute left-2/3 top-full z-50 mt-3 w-60 -translate-x-2/3 rounded-xl border border-border bg-white p-2 shadow-lg">
                     <div className="border-b border-border px-3 py-3">
                       <p className="truncate text-sm font-semibold text-brand-text">
                         {fullName}
@@ -186,20 +187,32 @@ export default function Navbar() {
                       <LayoutDashboard size={18} />
                       Dashboard
                     </Link>
+
                     {userRole === "job_seeker" && (
-                      <Link
-                        href="/my-applications"
-                        onClick={() => setIsDropdownOpen(false)}
-                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
-                      >
-                        <BriefcaseBusiness size={18} />
-                        My Applications
-                      </Link>
+                      <>
+                        <Link
+                          href="/my-applications"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                        >
+                          <BriefcaseBusiness size={18} />
+                          My Applications
+                        </Link>
+
+                        <Link
+                          href="/saved-jobs"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                        >
+                          <Bookmark size={18} />
+                          Saved Jobs
+                        </Link>
+                      </>
                     )}
 
                     {userRole === "recruiter" && (
                       <Link
-                        href="/dashboard/my-applicants"
+                        href="/dashboard/applicants"
                         onClick={() => setIsDropdownOpen(false)}
                         className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
                       >
@@ -207,6 +220,7 @@ export default function Navbar() {
                         My Applicants
                       </Link>
                     )}
+
                     <div className="border-t border-border pt-2">
                       <LogoutButton />
                     </div>
@@ -255,6 +269,8 @@ export default function Navbar() {
             onClose={closeMenu}
             isAuthenticated={isAuthenticated}
             isAuthLoading={isAuthLoading}
+            fullName={fullName}
+            userRole={userRole}
           />
         </div>
       )}

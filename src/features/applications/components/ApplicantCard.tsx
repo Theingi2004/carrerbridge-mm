@@ -1,6 +1,7 @@
 
 "use client";
 import { useState } from "react";
+import { ThemeSelect } from "@/components/ui/theme-select";
 import type { Applicant, ApplicationStatus } from "../types/application.types";
 import ApplicantStatusBadge from "./ApplicantStatusBadge";
 type ApplicantCardProps = {
@@ -134,20 +135,21 @@ export default function ApplicantCard({
         </label>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <select
+          <ThemeSelect
             id={`status-${applicant.id}`}
             value={selectedStatus}
-            onChange={(event) =>
-              setSelectedStatus(event.target.value as ApplicationStatus)
+            onValueChange={(value) =>
+              setSelectedStatus(value as ApplicationStatus)
             }
-            className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-primary sm:w-64"
-          >
-            <option value="pending">Pending</option>
-            <option value="reviewing">Reviewing</option>
-            <option value="shortlisted">Shortlisted</option>
-            <option value="rejected">Rejected</option>
-            <option value="accepted">Accepted</option>
-          </select>
+            className="sm:w-64"
+            options={[
+              { value: "pending", label: "Pending" },
+              { value: "reviewing", label: "Reviewing" },
+              { value: "shortlisted", label: "Shortlisted" },
+              { value: "rejected", label: "Rejected" },
+              { value: "accepted", label: "Accepted" },
+            ]}
+          />
 
           <button
             type="button"
