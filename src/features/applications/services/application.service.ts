@@ -9,7 +9,7 @@ import type {
   CreateApplicationInput,
 } from "../types/application.types";
 import { getProfilesByIds } from "@/features/profile/services/profile.service";
-
+import type { Notification } from "@/features/notification/types/notification.types";
 const DEMO_APPLICATIONS_KEY = "careerbridge-demo-applications";
 
 // Get demo applications from localStorage
@@ -63,7 +63,37 @@ export async function applyForJob(
       DEMO_APPLICATIONS_KEY,
       JSON.stringify(updatedApplications)
     );
+    // Create a notification for the job owner
+    const appliedJob = getCreatedJobs().find(
+      (job) => job.id === input.job_id
+    );
 
+    if (appliedJob?.recruiterId) {
+      const notification: Notification = {
+        id: crypto.randomUUID(),
+        user_id: appliedJob.recruiterId,
+        job_id: appliedJob.id,
+        title: "New Job Application",
+        message: `A job seeker has applied for your job: ${appliedJob.title}.`,
+        type: "application",
+        link: "/dashboard/applicants",
+        is_read: false,
+        created_at: now,
+      };
+
+      const storedNotifications = localStorage.getItem(
+        "careerbridge-demo-notifications"
+      );
+
+      const notifications: Notification[] = storedNotifications
+        ? JSON.parse(storedNotifications)
+        : [];
+
+      localStorage.setItem(
+        "careerbridge-demo-notifications",
+        JSON.stringify([notification, ...notifications])
+      );
+    }
     return newApplication;
   }
 

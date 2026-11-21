@@ -11,6 +11,7 @@ import {
   BriefcaseBusiness,
   Bookmark,
   Users,
+  BellRing,
 } from "lucide-react";
 
 import LogoutButton from "@/features/auth/LogoutButton";
@@ -105,6 +106,14 @@ export default function MobileNav({
               {/* Account Links */}
               <div className="p-2">
                 <Link
+                  href="/notifications"
+                  onClick={onClose}
+                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-brand-text transition-colors hover:bg-brand-background"
+                >
+                  <BellRing size={18} className="text-muted-foreground" />
+                  Notifications
+                </Link>
+                <Link
                   href="/profile"
                   onClick={onClose}
                   className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-brand-text transition-colors hover:bg-brand-background"
@@ -146,6 +155,17 @@ export default function MobileNav({
                         className="text-muted-foreground"
                       />
                       Saved Jobs
+                    </Link>
+                    <Link
+                      href="/job-alerts"
+                      onClick={onClose}
+                      className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-brand-text transition-colors hover:bg-brand-background"
+                    >
+                      <BellRing
+                        size={18}
+                        className="text-muted-foreground"
+                      />
+                      Job Alerts
                     </Link>
                   </>
                 )}

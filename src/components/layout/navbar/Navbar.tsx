@@ -13,6 +13,7 @@ import {
   UserRound,
   LayoutDashboard,
   Users,
+  BellRing,
 } from "lucide-react";
 
 import DesktopNav from "./DesktopNav";
@@ -23,6 +24,7 @@ import { isDemoMode } from "@/lib/demo-mode";
 import { createClient } from "@/lib/supabase/client";
 import { demoUser, demoRecruiter } from "@/features/auth/data/demo-user";
 import LogoutButton from "@/features/auth/LogoutButton";
+import NotificationBell from "@/features/job-alert/components/NotificationBell";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -149,83 +151,94 @@ export default function Navbar() {
         <div className="hidden items-center gap-5 lg:flex">
           {!isAuthLoading &&
             (isAuthenticated ? (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setIsDropdownOpen((prev) => !prev)
-                  }
-                  aria-expanded={isDropdownOpen}
-                  aria-label="Open account menu"
-                  className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-brand-primary text-sm font-bold text-white transition-colors hover:bg-brand-primary/90"
-                >
-                  {getInitials(fullName)}
-                </button>
+              <div className="flex items-center gap-3">
+                <NotificationBell />
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsDropdownOpen((prev) => !prev)
+                    }
+                    aria-expanded={isDropdownOpen}
+                    aria-label="Open account menu"
+                    className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-brand-primary text-sm font-bold text-white transition-colors hover:bg-brand-primary/90"
+                  >
+                    {getInitials(fullName)}
+                  </button>
 
-                {isDropdownOpen && (
-                  <div className="absolute left-2/3 top-full z-50 mt-3 w-60 -translate-x-2/3 rounded-xl border border-border bg-white p-2 shadow-lg">
-                    <div className="border-b border-border px-3 py-3">
-                      <p className="truncate text-sm font-semibold text-brand-text">
-                        {fullName}
-                      </p>
-                    </div>
+                  {isDropdownOpen && (
+                    <div className="absolute left-2/3 top-full z-50 mt-3 w-60 -translate-x-2/3 rounded-xl border border-border bg-white p-2 shadow-lg">
+                      <div className="border-b border-border px-3 py-3">
+                        <p className="truncate text-sm font-semibold text-brand-text">
+                          {fullName}
+                        </p>
+                      </div>
 
-                    <Link
-                      href="/profile"
-                      onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
-                    >
-                      <UserRound size={18} />
-                      My Profile
-                    </Link>
-
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
-                    >
-                      <LayoutDashboard size={18} />
-                      Dashboard
-                    </Link>
-
-                    {userRole === "job_seeker" && (
-                      <>
-                        <Link
-                          href="/my-applications"
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
-                        >
-                          <BriefcaseBusiness size={18} />
-                          My Applications
-                        </Link>
-
-                        <Link
-                          href="/saved-jobs"
-                          onClick={() => setIsDropdownOpen(false)}
-                          className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
-                        >
-                          <Bookmark size={18} />
-                          Saved Jobs
-                        </Link>
-                      </>
-                    )}
-
-                    {userRole === "recruiter" && (
                       <Link
-                        href="/dashboard/applicants"
+                        href="/profile"
                         onClick={() => setIsDropdownOpen(false)}
                         className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
                       >
-                        <Users size={18} />
-                        My Applicants
+                        <UserRound size={18} />
+                        My Profile
                       </Link>
-                    )}
 
-                    <div className="border-t border-border pt-2">
-                      <LogoutButton />
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                      >
+                        <LayoutDashboard size={18} />
+                        Dashboard
+                      </Link>
+
+                      {userRole === "job_seeker" && (
+                        <>
+                          <Link
+                            href="/my-applications"
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                          >
+                            <BriefcaseBusiness size={18} />
+                            My Applications
+                          </Link>
+
+                          <Link
+                            href="/saved-jobs"
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                          >
+                            <Bookmark size={18} />
+                            Saved Jobs
+                          </Link>
+                          <Link
+                            href="/job-alerts"
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                          >
+                            <BellRing size={18} />
+                            Job Alerts
+                          </Link>
+                        </>
+                      )}
+
+                      {userRole === "recruiter" && (
+                        <Link
+                          href="/dashboard/applicants"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                        >
+                          <Users size={18} />
+                          My Applicants
+                        </Link>
+                      )}
+
+                      <div className="border-t border-border pt-2">
+                        <LogoutButton />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ) : (
               <>

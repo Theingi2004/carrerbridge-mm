@@ -162,7 +162,6 @@ export function getCreatedJobs(): Job[] {
 }
 
 // Create a new job
-
 export async function createJob(job: Job): Promise<void> {
   // Step 1: Preserve existing Demo Mode.
   if (isDemoMode) {
