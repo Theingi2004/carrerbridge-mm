@@ -12,6 +12,7 @@ import { createJob, getJobById, updateJob } from "../services/job.service";
 import { demoRecruiter } from "@/features/auth/data/demo-user";
 import { useRouter } from "next/navigation";
 import { ThemeSelect } from "@/components/ui/theme-select";
+import { MYANMAR_LOCATIONS } from "../constants/job-locations";
 
 const STORAGE_KEY = "careerbridge-demo-jobs";
 
@@ -266,12 +267,25 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
         <label className="mb-2 block text-sm font-medium">
           Location
         </label>
-        <input
+
+        <ThemeSelect
           name="location"
           value={formData.location}
-          onChange={handleChange}
-          className={inputClass}
-          placeholder="e.g. Yangon / Remote"
+          onValueChange={(value) =>
+            setFormData((current) => ({
+              ...current,
+              location: value,
+            }))
+          }
+          placeholder="Select location"
+          options={[
+            { value: "", label: "Select location" },
+            ...MYANMAR_LOCATIONS.map((location) => ({
+              value: location,
+              label: location,
+            })),
+            { value: "Remote", label: "Remote" },
+          ]}
         />
       </div>
 

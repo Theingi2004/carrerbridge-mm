@@ -13,6 +13,7 @@ import {
 import useJobAlerts from "../hooks/useJobAlerts";
 import type { CreateJobAlertInput } from "../types/job-alert.types";
 import { ThemeSelect } from "@/components/ui/theme-select";
+import { MYANMAR_LOCATIONS } from "@/features/job/constants/job-locations";
 
 // Use the same categories as the Job Post Form.
 const IT_JOB_CATEGORIES: string[] = [
@@ -195,11 +196,19 @@ export default function JobAlertsPage() {
                   Location
                 </label>
 
-                <input
+                <ThemeSelect
+                  name="location"
                   value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                  placeholder="e.g. Yangon"
-                  className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand-primary"
+                  onValueChange={setLocation}
+                  placeholder="Any Location"
+                  options={[
+                    { value: "", label: "Any Location" },
+                    ...MYANMAR_LOCATIONS.map((item) => ({
+                      value: item,
+                      label: item,
+                    })),
+                    { value: "Remote", label: "Remote" },
+                  ]}
                 />
               </div>
 
@@ -225,19 +234,20 @@ export default function JobAlertsPage() {
               </div>
 
               {/* Experience Level */}
+              {/* Experience Level */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-brand-text">
                   Experience Level
                 </label>
 
                 <ThemeSelect
-                  name="category"
-                  value={category}
-                  onValueChange={setCategory}
-                  placeholder="Select category"
+                  name="experienceLevel"
+                  value={experienceLevel}
+                  onValueChange={setExperienceLevel}
+                  placeholder="Any Experience Level"
                   options={[
-                    { value: "", label: "Any Category" },
-                    ...IT_JOB_CATEGORIES.map((item) => ({
+                    { value: "", label: "Any Experience Level" },
+                    ...EXPERIENCE_LEVELS.map((item) => ({
                       value: item,
                       label: item,
                     })),
