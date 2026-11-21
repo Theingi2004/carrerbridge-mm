@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,6 +9,10 @@ import {
   BriefcaseBusiness,
   Menu,
   X,
+  ChevronDown,
+  UserRound,
+  LayoutDashboard,
+  Users,
 } from "lucide-react";
 
 import DesktopNav from "./DesktopNav";
@@ -16,42 +21,95 @@ import { navLinks } from "./nav-links";
 
 import { isDemoMode } from "@/lib/demo-mode";
 import { createClient } from "@/lib/supabase/client";
+import { demoUser, demoRecruiter } from "@/features/auth/data/demo-user";
+import LogoutButton from "@/features/auth/LogoutButton";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-
+  const [fullName, setFullName] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [userRole, setUserRole] = useState("");
   const pathname = usePathname();
 
   const closeMenu = () => setIsMenuOpen(false);
 
+  const getInitials = (name: string) => {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) return "U";
+
+    if (words.length === 1) {
+      return words[0].slice(0, 2).toUpperCase();
+    }
+
+    return (
+      words[0][0] + words[words.length - 1][0]
+    ).toUpperCase();
+  };
+
   useEffect(() => {
+    setIsDropdownOpen(false);
     if (isDemoMode) {
       const hasDemoSession = document.cookie
         .split("; ")
         .some((cookie) => cookie === "careerbridge_demo_session=true");
 
+      const roleCookie = document.cookie
+        .split("; ")
+        .find((cookie) => cookie.startsWith("careerbridge_demo_role="));
+
+      const role = roleCookie?.split("=")[1];
+
+      const user =
+        role === "recruiter" ? demoRecruiter : demoUser;
+
       setIsAuthenticated(hasDemoSession);
+      setFullName(hasDemoSession ? user.full_name : "");
+      setUserRole(hasDemoSession ? role || "" : "");
       setIsAuthLoading(false);
       return;
     }
 
     const supabase = createClient();
 
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (!error) {
-        setIsAuthenticated(Boolean(data.session));
+    const loadUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (!error && user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name,role")
+          .eq("id", user.id)
+          .single();
+
+        setIsAuthenticated(true);
+        setFullName(
+          profile?.full_name ||
+          user.user_metadata?.full_name ||
+          user.email ||
+          "User"
+        );
+        setUserRole(profile?.role || user.user_metadata?.role || "");
+      } else {
+        setIsAuthenticated(false);
+        setFullName("");
+        setUserRole("");
       }
 
       setIsAuthLoading(false);
-    });
+    };
+
+    loadUser();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(Boolean(session));
-      setIsAuthLoading(false);
+    } = supabase.auth.onAuthStateChange(() => {
+      loadUser();
     });
 
     return () => {
@@ -84,21 +142,77 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <DesktopNav
-          links={navLinks}
-          pathname={pathname}
-        />
+        <DesktopNav links={navLinks} pathname={pathname} />
 
         {/* Desktop Actions */}
         <div className="hidden items-center gap-5 lg:flex">
           {!isAuthLoading &&
             (isAuthenticated ? (
-              <Link
-                href="/dashboard"
-                className="rounded-lg bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-primary/90"
-              >
-                Dashboard
-              </Link>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIsDropdownOpen((prev) => !prev)
+                  }
+                  aria-expanded={isDropdownOpen}
+                  aria-label="Open account menu"
+                  className="cursor-pointer flex size-11 items-center justify-center rounded-full bg-brand-primary text-sm font-bold text-white transition-colors hover:bg-brand-primary/90"
+                >
+                  {getInitials(fullName)}
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute left-2/3 -translate-x-2/3 top-full z-50 mt-3 w-60 rounded-xl border border-border bg-white p-2  shadow-lg">
+                    <div className="border-b border-border px-3 py-3">
+                      <p className="truncate text-sm font-semibold text-brand-text">
+                        {fullName}
+                      </p>
+                    </div>
+
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                    >
+                      <UserRound size={18} />
+                      My Profile
+                    </Link>
+
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                    >
+                      <LayoutDashboard size={18} />
+                      Dashboard
+                    </Link>
+                    {userRole === "job_seeker" && (
+                      <Link
+                        href="/my-applications"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                      >
+                        <BriefcaseBusiness size={18} />
+                        My Applications
+                      </Link>
+                    )}
+
+                    {userRole === "recruiter" && (
+                      <Link
+                        href="/dashboard/my-applicants"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-brand-text hover:bg-brand-background"
+                      >
+                        <Users size={18} />
+                        My Applicants
+                      </Link>
+                    )}
+                    <div className="border-t border-border pt-2">
+                      <LogoutButton />
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link
@@ -128,11 +242,7 @@ export default function Navbar() {
           aria-controls="mobile-navigation"
           className="flex size-10 items-center justify-center rounded-lg border border-border text-brand-primary transition-colors hover:bg-brand-background lg:hidden"
         >
-          {isMenuOpen ? (
-            <X size={22} />
-          ) : (
-            <Menu size={22} />
-          )}
+          {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 

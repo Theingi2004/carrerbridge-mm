@@ -1,3 +1,5 @@
+import { Job } from "@/features/job/types/job.types";
+import { Profile } from "@/features/profile/types/profile.types";
 
 export type ApplicationStatus =
   | "pending"
@@ -19,4 +21,8 @@ export interface Application {
 export interface CreateApplicationInput {
   job_id: string;
   cover_letter: string;
+}
+export interface Applicant extends Application {
+  profile: Profile | null;
+  job: Job | null;
 }

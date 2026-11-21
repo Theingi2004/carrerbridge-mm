@@ -33,7 +33,21 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Refresh and validate the authentication session.
-  await supabase.auth.getClaims();
+  const { data, error } = await supabase.auth.getClaims();
+
+  if (error) {
+    console.error("Proxy auth error details:", {
+      name: error.name,
+      message: error.message,
+      cause: error.cause,
+      stack: error.stack,
+    });
+  }
+
+  console.log("Proxy auth check:", {
+    hasClaims: !!data?.claims,
+    error: error?.message ?? null,
+  });
 
   return supabaseResponse;
 }

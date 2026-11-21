@@ -3,21 +3,63 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { getCreatedJobs } from "../services/job.service";
+import {
+  getCreatedJobs, getCachedJobs, getPublicJobs,
+
+}
+  from "../services/job.service";
 import type { Job } from "../types/job.types";
 import { jobs } from "../data/jobs";
 import JobCard from "@/features/home/components/JobCard";
-
+import { isDemoMode } from "@/lib/demo-mode";
 export default function JobsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [employmentType, setEmploymentType] = useState("all");
   const [createdJobs, setCreatedJobs] = useState<Job[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const jobsPerPage = 9;
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, category, employmentType]);
 
   useEffect(() => {
-    setCreatedJobs(getCreatedJobs());
-  }, []);
+    const loadJobs = async () => {
+      if (isDemoMode) {
+        setCreatedJobs(getCreatedJobs());
+        return;
+      }
 
+      // Show cached jobs immediately.
+      setCreatedJobs(getCachedJobs());
+
+      // Fetch the latest jobs from Supabase.
+      try {
+        const publicJobs = await getPublicJobs();
+        const cachedJobs = getCachedJobs();
+
+        // Merge database jobs and locally cached jobs.
+        const mergedJobs = [
+          ...cachedJobs,
+          ...publicJobs.filter(
+            (job) =>
+              !cachedJobs.some(
+                (cachedJob) => cachedJob.id === job.id
+              )
+          ),
+        ];
+
+        setCreatedJobs(mergedJobs);
+      } catch (error) {
+        console.error("Unable to fetch public jobs:", error);
+      }
+    };
+
+    void loadJobs();
+  }, []);
   const allJobs = [
     ...createdJobs.filter((job) => job.status === "active"),
     ...jobs,
@@ -63,6 +105,19 @@ export default function JobsPage() {
       );
     });
   }, [search, category, employmentType, createdJobs]);
+  // Calculate total pages
+  const totalPages = Math.ceil(
+    filteredJobs.length / jobsPerPage
+  );
+
+  // Calculate the starting and ending index
+  const startIndex = (currentPage - 1) * jobsPerPage;
+
+  // Get jobs for the current page
+  const currentJobs = filteredJobs.slice(
+    startIndex,
+    startIndex + jobsPerPage
+  );
 
   const clearFilters = () => {
     setSearch("");
@@ -179,17 +234,60 @@ export default function JobsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {filteredJobs.length} jobs found
+                  Showing{" "}
+                  {filteredJobs.length === 0 ? 0 : startIndex + 1}
+                  –
+                  {Math.min(startIndex + jobsPerPage, filteredJobs.length)}
+                  {" "}of {filteredJobs.length} jobs
                 </p>
               </div>
             </div>
 
             {filteredJobs.length > 0 ? (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {filteredJobs.map((job) => (
-                  <JobCard key={job.id} job={job} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                  {currentJobs.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+                {/* Pagination */}
+                <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                    disabled={currentPage === 1}
+                    className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-brand-text transition-colors hover:bg-brand-background disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={`size-10 rounded-lg text-sm font-semibold transition-colors ${currentPage === page
+                          ? "bg-brand-primary text-white"
+                          : "border border-border text-brand-text hover:bg-brand-background"
+                          }`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    disabled={currentPage === totalPages}
+                    className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-brand-text transition-colors hover:bg-brand-background disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+
             ) : (
               <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
                 <Search

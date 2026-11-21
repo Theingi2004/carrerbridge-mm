@@ -53,7 +53,7 @@ export default function LogoutButton() {
         type="button"
         onClick={handleLogout}
         disabled={isLoading}
-        className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-primary/90 active:scale-95 disabled:opacity-60"
+        className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-primary/90 active:scale-95 disabled:opacity-60"
       >
         {isLoading ? (
           <Loader2 size={18} className="animate-spin" />

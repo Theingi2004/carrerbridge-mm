@@ -5,13 +5,13 @@ import { connection } from "next/server";
 import MyJobPosts from "@/features/job/components/MyJobPosts";
 import { createClient } from "@/lib/supabase/server";
 import { isDemoMode } from "@/lib/demo-mode";
-import RecruiterApplications from "@/features/applications/components/RecruiterApplications";
 import { initializeDemoRecruiterJobs } from "@/features/job/services/job.service";
 import {
   demoUser,
   demoRecruiter,
 } from "@/features/auth/data/demo-user";
-import LogoutButton from "@/features/auth/LogoutButton";
+import SyncStatus from "@/components/shared/SyncStatus";
+import Link from "next/link";
 
 export default function DashboardPage() {
   return (
@@ -59,98 +59,98 @@ async function DashboardContent() {
       initializeDemoRecruiterJobs();
     }
     return (
-      <main className="min-h-screen bg-brand-background py-12">
-        <div className="container-default">
-          <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-            <p className="text-sm font-semibold text-brand-secondary">
-              CareerBridge MM — Demo Mode
-            </p>
+      <div>
+        <SyncStatus />
+        <main className="min-h-screen bg-brand-background py-12">
+          <div className="container-default">
+            <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
+              <p className="text-sm font-semibold text-brand-secondary">
+                CareerBridge MM — Demo Mode
+              </p>
 
-            <h1 className="mt-3 text-3xl font-bold text-brand-text">
-              Welcome, {currentUser.full_name}!
-            </h1>
+              <h1 className="mt-3 text-3xl font-bold text-brand-text">
+                Welcome, {currentUser.full_name}!
+              </h1>
 
-            <p className="mt-3 text-sm text-muted-foreground">
-              {currentUser.email}
-            </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {currentUser.email}
+              </p>
 
-            <div className="mt-6">
-              <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-sm font-semibold text-brand-primary">
-                {currentUser.role === "recruiter"
-                  ? "Recruiter"
-                  : "Job Seeker"}
-              </span>
-            </div>
-
-            <div className="mt-6 space-y-3 text-sm text-muted-foreground">
-              <p>Phone: {currentUser.phone}</p>
-              <p>Location: {currentUser.location}</p>
-              <p>Headline: {currentUser.headline}</p>
-              <p>Bio: {currentUser.bio}</p>
-
-              <div>
-                <p className="mb-2 font-semibold text-brand-text">
-                  Skills
-                </p>
-
-                <div className="flex flex-wrap gap-2">
-                  {currentUser.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-full bg-brand-primary/10 px-3 py-1 text-brand-primary"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
+              <div className="mt-6">
+                <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-sm font-semibold text-brand-primary">
+                  {currentUser.role === "recruiter"
+                    ? "Recruiter"
+                    : "Job Seeker"}
+                </span>
               </div>
-            </div>
 
+              <div className="mt-6 space-y-3 text-sm text-muted-foreground">
+                <p>Phone: {currentUser.phone}</p>
+                <p>Location: {currentUser.location}</p>
+                <p>Headline: {currentUser.headline}</p>
+                <p>Bio: {currentUser.bio}</p>
 
-            {isRecruiter && (
-              <div className="mt-8 space-y-6">
-                <div className="rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-bold text-brand-text">
-                    Recruiter Dashboard
-                  </h2>
-
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Manage your IT job postings and review applications.
+                <div>
+                  <p className="mb-2 font-semibold text-brand-text">
+                    Skills
                   </p>
 
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-lg bg-brand-background p-4">
-                      <p className="text-sm text-muted-foreground">
-                        My Job Posts
-                      </p>
-                      <p className="mt-2 text-2xl font-bold text-brand-text">
-                        Manage Jobs
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg bg-brand-background p-4">
-                      <p className="text-sm text-muted-foreground">
-                        Applications
-                      </p>
-                      <p className="mt-2 text-2xl font-bold text-brand-text">
-                        Coming Soon
-                      </p>
-                    </div>
+                  <div className="flex flex-wrap gap-2">
+                    {currentUser.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="rounded-full bg-brand-primary/10 px-3 py-1 text-brand-primary"
+                      >
+                        {skill}
+                      </span>
+                    ))}
                   </div>
-
                 </div>
-                <MyJobPosts />
-                <RecruiterApplications />
               </div>
-            )}
 
 
-            <div className="mt-8">
-              <LogoutButton />
+              {isRecruiter && (
+                <div className="mt-8 space-y-6">
+                  <div className="rounded-xl border border-border p-6">
+                    <h2 className="text-xl font-bold text-brand-text">
+                      Recruiter Dashboard
+                    </h2>
+
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Manage your IT job postings and review applications.
+                    </p>
+
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-lg bg-brand-background p-4">
+                        <p className="text-sm text-muted-foreground">
+                          My Job Posts
+                        </p>
+                        <p className="mt-2 text-2xl font-bold text-brand-text">
+                          Manage Jobs
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-brand-background p-4">
+                        <p className="text-sm text-muted-foreground">
+                          Applications
+                        </p>
+                        <Link
+                          href="/dashboard/applicants"
+                          className="mt-2 inline-block text-lg font-bold text-brand-primary hover:underline"
+                        >
+                          View Applicants →
+                        </Link>
+                      </div>
+                    </div>
+
+                  </div>
+                  <MyJobPosts />
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     );
   }
 
@@ -225,10 +225,6 @@ async function DashboardContent() {
               </div>
             </div>
           )}
-
-          <div className="mt-8">
-            <LogoutButton />
-          </div>
         </div>
       </div>
     </main>

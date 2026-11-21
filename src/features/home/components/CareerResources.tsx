@@ -67,7 +67,7 @@ export default function CareerResources() {
         </div>
 
         {/* Resource Cards */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {resources.map((resource) => {
             const Icon = resource.icon;
 

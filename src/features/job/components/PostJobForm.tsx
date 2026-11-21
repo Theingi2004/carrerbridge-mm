@@ -1,17 +1,18 @@
 
 "use client";
 
+import type { Job } from "../types/job.types";
+import { demoRecruiterJobs } from "../data/demo-recruiter-jobs";
+
+import { isDemoMode } from "@/lib/demo-mode";
+import { createClient } from "@/lib/supabase/client";
+import { addToSyncQueue } from "@/lib/offline-sync";
 import { useEffect, useState } from "react";
+import { createJob, getJobById, updateJob } from "../services/job.service";
+import { demoRecruiter } from "@/features/auth/data/demo-user";
 import { useRouter } from "next/navigation";
 
-import {
-  createJob,
-  getJobById,
-  updateJob,
-} from "../services/job.service";
-
-import type { Job } from "../types/job.types";
-import { demoRecruiter } from "@/features/auth/data/demo-user";
+const STORAGE_KEY = "careerbridge-demo-jobs";
 
 interface PostJobFormProps {
   jobId?: string;
@@ -50,6 +51,7 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(Boolean(jobId));
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!jobId) return;
@@ -97,9 +99,14 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
     setError("");
+
+    if (isSubmitting) return;
 
     // Get the existing job when editing.
     const existingJob = jobId ? getJobById(jobId) : undefined;
@@ -117,10 +124,8 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
       return;
     }
 
-    // Set the original posting date.
     const postedAt = existingJob?.postedAt ?? new Date().toISOString();
 
-    // New jobs expire after 30 days.
     const expiresAt =
       existingJob?.expiresAt ??
       new Date(
@@ -159,7 +164,7 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
         .filter(Boolean),
     };
 
-    // Check required fields.
+    // Validate required fields.
     if (
       !jobData.title ||
       !jobData.company ||
@@ -170,21 +175,33 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
       return;
     }
 
-    // Validate IT job category.
     if (!IT_JOB_CATEGORIES.includes(jobData.category)) {
       setError("Please select a valid IT job category.");
       return;
     }
 
-    // Create or update job.
-    if (jobId) {
-      updateJob(jobData, demoRecruiter.id);
-    } else {
-      createJob(jobData);
-    }
+    setIsSubmitting(true);
 
-    router.push("/dashboard");
-    router.refresh();
+    try {
+      if (jobId) {
+        // Existing Demo Mode edit behavior.
+        updateJob(jobData, demoRecruiter.id);
+      } else {
+        // Create job using Demo Mode or Supabase service.
+        await createJob(jobData);
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClass =
@@ -379,9 +396,14 @@ export default function PostJobForm({ jobId }: PostJobFormProps) {
 
       <button
         type="submit"
-        className="w-full rounded-lg bg-brand-primary px-5 py-3 font-semibold text-white hover:opacity-90"
+        disabled={isSubmitting}
+        className="w-full rounded-lg bg-brand-primary px-5 py-3 font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {jobId ? "Update Job" : "Post Job"}
+        {isSubmitting
+          ? "Saving..."
+          : jobId
+            ? "Update Job"
+            : "Post Job"}
       </button>
     </form>
   );

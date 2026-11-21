@@ -1,12 +1,14 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { isDemoMode } from "@/lib/demo-mode";
-import { getCreatedJobs } from "@/features/job/services/job.service";
+import { getCreatedJobs, getJobsByIds } from "@/features/job/services/job.service";
 import type {
+  Applicant,
   Application,
   ApplicationStatus,
   CreateApplicationInput,
 } from "../types/application.types";
+import { getProfilesByIds } from "@/features/profile/services/profile.service";
 
 const DEMO_APPLICATIONS_KEY = "careerbridge-demo-applications";
 
@@ -203,4 +205,34 @@ export async function updateApplicationStatus(
   throw new Error(
     "Application status updates are not configured for Supabase yet."
   );
+}
+// Get complete applicant information for a recruiter.
+export async function getRecruiterApplicants(
+  recruiterId: string
+): Promise<Applicant[]> {
+  const applications = await getApplicationsForRecruiter(recruiterId);
+
+  if (applications.length === 0) {
+    return [];
+  }
+
+  const userIds = [
+    ...new Set(applications.map((application) => application.user_id)),
+  ];
+
+  const jobIds = [
+    ...new Set(applications.map((application) => application.job_id)),
+  ];
+
+  const [profiles, jobs] = await Promise.all([
+    getProfilesByIds(userIds),
+    Promise.resolve(getJobsByIds(jobIds)),
+  ]);
+
+  return applications.map((application) => ({
+    ...application,
+    profile:
+      profiles.find((profile) => profile.id === application.user_id) ?? null,
+    job: jobs.find((job) => job.id === application.job_id) ?? null,
+  }));
 }

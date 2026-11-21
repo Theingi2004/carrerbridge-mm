@@ -1,57 +1,43 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { getApplicationsForRecruiter } from "../services/application.service";
-import { demoRecruiter } from "@/features/auth/data/demo-user";
+import useRecruiterApplicants from "../hooks/useRecruiterApplicants";
+import ApplicantCard from "./ApplicantCard";
 
-import type { Application } from "../types/application.types";
 import { updateApplicationStatus } from "../services/application.service";
+
 import type { ApplicationStatus } from "../types/application.types";
+
 export default function RecruiterApplications() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    applicants,
+    isLoading,
+    error,
+    setApplicants,
+  } = useRecruiterApplicants();
 
-  useEffect(() => {
-    const loadApplications = async () => {
-      try {
-        const data = await getApplicationsForRecruiter(
-          demoRecruiter.id
-        );
-
-        setApplications(data);
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load applications."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadApplications();
-  }, []);
+  const [updateError, setUpdateError] = useState("");
 
   const handleStatusChange = async (
     applicationId: string,
     status: ApplicationStatus
   ) => {
     try {
+      setUpdateError("");
+
       await updateApplicationStatus(applicationId, status);
 
-      setApplications((currentApplications) =>
-        currentApplications.map((application) =>
-          application.id === applicationId
-            ? { ...application, status }
-            : application
+      setApplicants((currentApplicants) =>
+        currentApplicants.map((applicant) =>
+          applicant.id === applicationId
+            ? { ...applicant, status }
+            : applicant
         )
       );
     } catch (error) {
-      setError(
+      setUpdateError(
         error instanceof Error
           ? error.message
           : "Failed to update application status."
@@ -60,81 +46,84 @@ export default function RecruiterApplications() {
   };
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading applications...</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        Loading applicants...
+      </p>
+    );
   }
 
   if (error) {
-    return <p className="text-sm text-red-600">{error}</p>;
+    return (
+      <p className="text-sm text-red-600">
+        {error}
+      </p>
+    );
   }
+
+  const pendingCount = applicants.filter(
+    (applicant) => applicant.status === "pending"
+  ).length;
 
   return (
     <section className="mt-8">
+      {/* Page Heading */}
       <div className="mb-6">
         <h2 className="text-xl font-bold text-brand-text">
-          Job Applications
+          Job Applicants
         </h2>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          Review applications submitted for your jobs.
+          Review and manage applications submitted for your jobs.
         </p>
       </div>
 
-      {applications.length > 0 ? (
-        <div className="space-y-4">
-          {applications.map((application) => (
-            <article
-              key={application.id}
-              className="rounded-xl border border-border bg-white p-5"
-            >
-              <p className="font-semibold text-brand-text">
-                Application ID: {application.id}
-              </p>
+      {/* Summary Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-border bg-white p-5">
+          <p className="text-sm text-muted-foreground">
+            Total Applicants
+          </p>
 
-              <p className="mt-2 text-sm text-muted-foreground">
-                Job ID: {application.job_id}
-              </p>
+          <p className="mt-2 text-2xl font-bold text-brand-text">
+            {applicants.length}
+          </p>
+        </div>
 
-              <div className="mt-3">
-                <label
-                  htmlFor={`status-${application.id}`}
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Application Status
-                </label>
+        <div className="rounded-xl border border-border bg-white p-5">
+          <p className="text-sm text-muted-foreground">
+            Pending Review
+          </p>
 
-                <select
-                  id={`status-${application.id}`}
-                  value={application.status}
-                  onChange={(event) =>
-                    handleStatusChange(
-                      application.id,
-                      event.target.value as ApplicationStatus
-                    )
-                  }
-                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="reviewing">Reviewing</option>
-                  <option value="shortlisted">Shortlisted</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="accepted">Accepted</option>
-                </select>
-              </div>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {application.cover_letter || "No cover letter provided."}
-              </p>
+          <p className="mt-2 text-2xl font-bold text-amber-600">
+            {pendingCount}
+          </p>
+        </div>
+      </div>
 
-              <p className="mt-3 text-xs text-muted-foreground">
-                Applied: {new Date(application.created_at).toLocaleDateString()}
-              </p>
-            </article>
+      {/* Status Update Error */}
+      {updateError && (
+        <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          {updateError}
+        </p>
+      )}
+
+      {/* Applicant List */}
+      {applicants.length > 0 ? (
+        <div className="space-y-5">
+          {applicants.map((applicant) => (
+            <ApplicantCard
+              key={applicant.id}
+              applicant={applicant}
+              onStatusChange={handleStatusChange}
+            />
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="font-medium text-brand-text">
-            No applications yet
-          </p>
+        <div className="rounded-xl border border-dashed border-border bg-white px-6 py-12 text-center">
+          <h3 className="font-semibold text-brand-text">
+            No applicants yet
+          </h3>
 
           <p className="mt-2 text-sm text-muted-foreground">
             Applications for your posted jobs will appear here.

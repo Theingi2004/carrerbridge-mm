@@ -71,19 +71,30 @@ export default function LoginForm() {
     // REAL SUPABASE LOGIN
     const supabase = createClient();
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
+    // const { data, error } = await supabase.auth.signInWithPassword({
+    //   email: values.email,
+    //   password: values.password,
+    // });
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    console.log("Dashboard auth check:", {
+      hasUser: !!user,
+      error: error?.message ?? null,
     });
-
-    setIsLoading(false);
-
     if (error) {
       setErrorMessage(error.message);
+      setIsLoading(false);
       return;
     }
 
-    router.push("/dashboard");
+    // console.log("Login successful:", data.user?.id);
+    // console.log("Session exists:", !!data.session);
+
+    setIsLoading(false);
+
+    router.replace("/dashboard");
     router.refresh();
   };
 
