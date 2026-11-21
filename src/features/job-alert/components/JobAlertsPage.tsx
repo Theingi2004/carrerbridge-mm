@@ -12,6 +12,36 @@ import {
 
 import useJobAlerts from "../hooks/useJobAlerts";
 import type { CreateJobAlertInput } from "../types/job-alert.types";
+import { ThemeSelect } from "@/components/ui/theme-select";
+
+// Use the same categories as the Job Post Form.
+const IT_JOB_CATEGORIES: string[] = [
+  "Frontend Development",
+  "Backend Development",
+  "Full Stack Development",
+  "Mobile Development",
+  "UI/UX Design",
+  "Quality Assurance",
+  "Data Analysis",
+  "DevOps",
+  "IT Support",
+  "WordPress Development",
+];
+
+const EMPLOYMENT_TYPES = [
+  "Full-time",
+  "Part-time",
+  "Internship",
+  "Contract",
+  "Remote",
+];
+
+const EXPERIENCE_LEVELS = [
+  "Entry Level",
+  "Junior",
+  "Mid Level",
+  "Senior",
+];
 
 export default function JobAlertsPage() {
   const {
@@ -31,14 +61,16 @@ export default function JobAlertsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState("");
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
 
     if (!name.trim()) return;
 
     const input: CreateJobAlertInput = {
       name: name.trim(),
-      category: category.trim(),
+      category,
       location: location.trim(),
       employment_type: employmentType,
       experience_level: experienceLevel,
@@ -121,6 +153,7 @@ export default function JobAlertsPage() {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Alert Name */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-brand-text">
                   Alert Name *
@@ -135,19 +168,28 @@ export default function JobAlertsPage() {
                 />
               </div>
 
+              {/* Category */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-brand-text">
-                  Category
+                  Job Category
                 </label>
 
-                <input
+                <ThemeSelect
+                  name="category"
                   value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  placeholder="e.g. Frontend Development"
-                  className="w-full rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand-primary"
+                  onValueChange={setCategory}
+                  placeholder="Select category"
+                  options={[
+                    { value: "", label: "Any Category" },
+                    ...IT_JOB_CATEGORIES.map((item) => ({
+                      value: item,
+                      label: item,
+                    })),
+                  ]}
                 />
               </div>
 
+              {/* Location */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-brand-text">
                   Location
@@ -161,49 +203,52 @@ export default function JobAlertsPage() {
                 />
               </div>
 
+              {/* Employment Type */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-brand-text">
                   Employment Type
                 </label>
 
-                <select
+                <ThemeSelect
+                  name="employmentType"
                   value={employmentType}
-                  onChange={(event) =>
-                    setEmploymentType(event.target.value)
-                  }
-                  className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-primary"
-                >
-                  <option value="">Any Type</option>
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Internship">Internship</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Remote">Remote</option>
-                </select>
+                  onValueChange={setEmploymentType}
+                  placeholder="Select employment type"
+                  options={[
+                    { value: "", label: "Any Type" },
+                    ...EMPLOYMENT_TYPES.map((item) => ({
+                      value: item,
+                      label: item,
+                    })),
+                  ]}
+                />
               </div>
 
+              {/* Experience Level */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-brand-text">
                   Experience Level
                 </label>
 
-                <select
-                  value={experienceLevel}
-                  onChange={(event) =>
-                    setExperienceLevel(event.target.value)
-                  }
-                  className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-primary"
-                >
-                  <option value="">Any Experience</option>
-                  <option value="Entry Level">Entry Level</option>
-                  <option value="Junior">Junior</option>
-                  <option value="Mid Level">Mid Level</option>
-                  <option value="Senior">Senior</option>
-                </select>
+                <ThemeSelect
+                  name="category"
+                  value={category}
+                  onValueChange={setCategory}
+                  placeholder="Select category"
+                  options={[
+                    { value: "", label: "Any Category" },
+                    ...IT_JOB_CATEGORIES.map((item) => ({
+                      value: item,
+                      label: item,
+                    })),
+                  ]}
+                />
               </div>
 
               {actionError && (
-                <p className="text-sm text-red-600">{actionError}</p>
+                <p className="text-sm text-red-600">
+                  {actionError}
+                </p>
               )}
 
               <button
@@ -217,6 +262,7 @@ export default function JobAlertsPage() {
             </form>
           </section>
 
+          {/* Existing Alerts */}
           <section>
             <h2 className="mb-5 text-lg font-bold text-brand-text">
               Your Alerts ({jobAlerts.length})
@@ -285,8 +331,8 @@ export default function JobAlertsPage() {
                     <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
                       <span
                         className={`text-xs font-semibold ${alert.is_active
-                            ? "text-green-600"
-                            : "text-muted-foreground"
+                          ? "text-green-600"
+                          : "text-muted-foreground"
                           }`}
                       >
                         {alert.is_active ? "Active" : "Inactive"}

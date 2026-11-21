@@ -5,6 +5,7 @@ import { demoRecruiterJobs } from "../data/demo-recruiter-jobs";
 import { isDemoMode } from "@/lib/demo-mode";
 import { createClient } from "@/lib/supabase/client";
 import { addToSyncQueue } from "@/lib/offline-sync";
+import { createJobAlertNotifications } from "@/features/job-alert/services/job-alert-matching.service";
 
 
 const STORAGE_KEY = "careerbridge-demo-jobs";
@@ -173,6 +174,7 @@ export async function createJob(job: Job): Promise<void> {
       STORAGE_KEY,
       JSON.stringify(updatedJobs)
     );
+    createJobAlertNotifications(job);
 
     return;
   }

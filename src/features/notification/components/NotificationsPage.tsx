@@ -81,8 +81,8 @@ export default function NotificationsPage() {
               <div
                 key={notification.id}
                 className={`rounded-xl border p-5 transition ${notification.is_read
-                    ? "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-                    : "border-brand-primary/20 bg-brand-primary/[0.04] dark:border-brand-primary/40 dark:bg-brand-primary/10"
+                  ? "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                  : "border-brand-primary/20 bg-brand-primary/[0.04] dark:border-brand-primary/40 dark:bg-brand-primary/10"
                   }`}
               >
                 <div className="flex items-start gap-4">
@@ -116,6 +116,11 @@ export default function NotificationsPage() {
                       {notification.link && (
                         <Link
                           href={notification.link}
+                          onClick={() => {
+                            if (!notification.is_read) {
+                              void markAsRead(notification.id);
+                            }
+                          }}
                           className="text-sm font-semibold text-brand-primary hover:underline"
                         >
                           View job

@@ -98,7 +98,6 @@ export async function createJobAlert(
       STORAGE_KEY,
       JSON.stringify([newAlert, ...alerts])
     );
-
     return newAlert;
   }
 

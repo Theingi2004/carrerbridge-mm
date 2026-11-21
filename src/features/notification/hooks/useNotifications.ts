@@ -11,6 +11,8 @@ import {
   markAllNotificationsAsRead,
 } from "../services/notification.service";
 
+const NOTIFICATIONS_UPDATED_EVENT = "careerbridge:notifications-updated";
+
 export default function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +42,22 @@ export default function useNotifications() {
 
   useEffect(() => {
     loadNotifications();
+
+    const handleNotificationsUpdated = () => {
+      void loadNotifications();
+    };
+
+    window.addEventListener(
+      NOTIFICATIONS_UPDATED_EVENT,
+      handleNotificationsUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        NOTIFICATIONS_UPDATED_EVENT,
+        handleNotificationsUpdated
+      );
+    };
   }, [loadNotifications]);
 
   const markAsRead = async (notificationId: string) => {
@@ -54,6 +72,10 @@ export default function useNotifications() {
             ? { ...notification, is_read: true }
             : notification
         )
+      );
+
+      window.dispatchEvent(
+        new Event(NOTIFICATIONS_UPDATED_EVENT)
       );
     } catch (error) {
       const message =
@@ -77,6 +99,10 @@ export default function useNotifications() {
           ...notification,
           is_read: true,
         }))
+      );
+
+      window.dispatchEvent(
+        new Event(NOTIFICATIONS_UPDATED_EVENT)
       );
     } catch (error) {
       const message =
